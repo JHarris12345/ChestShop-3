@@ -4,6 +4,7 @@ import com.Acrobot.ChestShop.ChestShop;
 import com.Acrobot.ChestShop.Configuration.Properties;
 import com.Acrobot.ChestShop.Events.Economy.CurrencyAddEvent;
 import com.Acrobot.ChestShop.Events.Economy.CurrencyTransferEvent;
+import com.Acrobot.ChestShop.Logging.ShopLogFile;
 import com.Acrobot.ChestShop.Permission;
 import com.Acrobot.ChestShop.UUIDs.NameManager;
 import org.bukkit.event.EventHandler;
@@ -58,6 +59,7 @@ public class TaxModule implements Listener {
                             event.getWorld()));
                 }
                 ChestShop.getShopLogger().info(String.format(TAX_RECEIVED_MESSAGE, taxAmount, tax, taxedAmount));
+                ShopLogFile.log(String.format(TAX_RECEIVED_MESSAGE, taxAmount, tax, taxedAmount));
             }
         } else if (event.getDirection() == CurrencyTransferEvent.Direction.PARTNER && Permission.has(event.getInitiator(), Permission.NO_BUY_TAX)) {
             // Reduce paid amount as the buyer has permission to not pay taxes
@@ -65,12 +67,14 @@ public class TaxModule implements Listener {
             BigDecimal taxedSentAmount = event.getAmountSent().subtract(taxSent);
             event.setAmountSent(taxedSentAmount);
             ChestShop.getShopLogger().info(String.format(TAX_SENT_MESSAGE, taxAmount, taxSent, taxedSentAmount));
+            ShopLogFile.log(String.format(TAX_SENT_MESSAGE, taxAmount, taxSent, taxedSentAmount));
 
             // Reduce the amount that the seller receives anyways even though tax wasn't paid as that shouldn't make a difference for the seller
             BigDecimal taxReceived = getTaxAmount(event.getAmountReceived(), taxAmount);
             BigDecimal taxedReceivedAmount = event.getAmountReceived().subtract(taxReceived);
             event.setAmountReceived(taxedReceivedAmount);
             ChestShop.getShopLogger().info(String.format(TAX_RECEIVED_MESSAGE, taxAmount, taxReceived, taxedReceivedAmount));
+            ShopLogFile.log(String.format(TAX_RECEIVED_MESSAGE, taxAmount, taxReceived, taxedReceivedAmount));
         }
     }
 }

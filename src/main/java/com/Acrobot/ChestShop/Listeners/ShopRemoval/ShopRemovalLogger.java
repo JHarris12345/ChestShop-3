@@ -4,6 +4,7 @@ import com.Acrobot.Breeze.Utils.LocationUtil;
 import com.Acrobot.ChestShop.ChestShop;
 import com.Acrobot.ChestShop.Configuration.Properties;
 import com.Acrobot.ChestShop.Events.ShopDestroyedEvent;
+import com.Acrobot.ChestShop.Logging.ShopLogFile;
 import com.Acrobot.ChestShop.Signs.ChestShopSign;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -37,6 +38,7 @@ public class ShopRemovalLogger implements Listener {
                     location);
 
             ChestShop.getShopLogger().info(message);
+            ShopLogFile.log(message);
         });
     }
 }

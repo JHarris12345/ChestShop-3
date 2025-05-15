@@ -199,13 +199,14 @@ public class ChestShop extends JavaPlugin {
         }
 
         if (Properties.LOG_TO_FILE) {
-            if (handler == null) {
+            // JHarris - Do my own file logging as this only lets you log to 1 file name (I want it monthly)
+            /*if (handler == null) {
                 File log = loadFile("ChestShop.log");
 
                 handler = loadHandler(log.getAbsolutePath());
                 handler.setFormatter(new FileFormatter());
             }
-            shopLogger.addHandler(handler);
+            shopLogger.addHandler(handler);*/
         }
 
         shopLogger.setUseParentHandlers(Properties.LOG_TO_CONSOLE);

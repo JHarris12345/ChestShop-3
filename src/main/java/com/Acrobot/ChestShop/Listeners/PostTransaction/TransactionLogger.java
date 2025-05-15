@@ -3,6 +3,7 @@ package com.Acrobot.ChestShop.Listeners.PostTransaction;
 import com.Acrobot.Breeze.Utils.LocationUtil;
 import com.Acrobot.ChestShop.ChestShop;
 import com.Acrobot.ChestShop.Events.TransactionEvent;
+import com.Acrobot.ChestShop.Logging.ShopLogFile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -37,5 +38,6 @@ public class TransactionLogger implements Listener {
                 LocationUtil.locationToString(event.getSign().getLocation()));
 
         ChestShop.getShopLogger().info(message);
+        ShopLogFile.log(message);
     }
 }

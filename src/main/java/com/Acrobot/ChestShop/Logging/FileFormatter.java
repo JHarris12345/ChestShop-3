@@ -13,7 +13,7 @@ import java.util.logging.LogRecord;
  * @author Acrobot
  */
 public class FileFormatter extends Formatter {
-    private final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    private final DateFormat dateFormat = new SimpleDateFormat("yyyy/MMM/dd HH:mm:ss");
 
     @Override
     public String format(LogRecord record) {
