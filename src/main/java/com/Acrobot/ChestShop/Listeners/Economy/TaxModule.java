@@ -58,8 +58,8 @@ public class TaxModule implements Listener {
                             NameManager.getServerEconomyAccount().getUuid(),
                             event.getWorld()));
                 }
-                ChestShop.getShopLogger().info(String.format(TAX_RECEIVED_MESSAGE, taxAmount, tax, taxedAmount));
-                ShopLogFile.log(String.format(TAX_RECEIVED_MESSAGE, taxAmount, tax, taxedAmount));
+                //ChestShop.getShopLogger().info(String.format(TAX_RECEIVED_MESSAGE, taxAmount, tax, taxedAmount));
+                //ShopLogFile.log(String.format(TAX_RECEIVED_MESSAGE, taxAmount, tax, taxedAmount));
             }
         } else if (event.getDirection() == CurrencyTransferEvent.Direction.PARTNER && Permission.has(event.getInitiator(), Permission.NO_BUY_TAX)) {
             // Reduce paid amount as the buyer has permission to not pay taxes
@@ -73,8 +73,8 @@ public class TaxModule implements Listener {
             BigDecimal taxReceived = getTaxAmount(event.getAmountReceived(), taxAmount);
             BigDecimal taxedReceivedAmount = event.getAmountReceived().subtract(taxReceived);
             event.setAmountReceived(taxedReceivedAmount);
-            ChestShop.getShopLogger().info(String.format(TAX_RECEIVED_MESSAGE, taxAmount, taxReceived, taxedReceivedAmount));
-            ShopLogFile.log(String.format(TAX_RECEIVED_MESSAGE, taxAmount, taxReceived, taxedReceivedAmount));
+            //ChestShop.getShopLogger().info(String.format(TAX_RECEIVED_MESSAGE, taxAmount, taxReceived, taxedReceivedAmount));
+            //ShopLogFile.log(String.format(TAX_RECEIVED_MESSAGE, taxAmount, taxReceived, taxedReceivedAmount));
         }
     }
 }
