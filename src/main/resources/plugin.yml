@@ -35,6 +35,10 @@ commands:
   csaccess:
     description: Allows trading at shops that you have access to
     usage: /<command>
+  csstats:
+    description: View chestshop stats
+    permission: chestshop.stats
+    usage: /<command>
 
 permissions:
   ChestShop.*:
