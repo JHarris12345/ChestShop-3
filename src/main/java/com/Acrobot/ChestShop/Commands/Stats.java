@@ -99,6 +99,8 @@ public class Stats implements TabExecutor {
 
                 for (String line : lines) {
                     try {
+                        // TODO: If we ever remove this check and include lines that DON'T have tax, then we need to re-do the system so that
+                        // the totalAfterTax becomes totalTax and the tax is calculated for each individual line, else it will be off
                         if (!line.contains("after tax)")) continue;
 
                         String timeString = line.substring(0, 22);
@@ -106,8 +108,6 @@ public class Stats implements TabExecutor {
 
                         // Only the time frame stated
                         if (System.currentTimeMillis() - time > (hours * 60 * 60000)) continue;
-
-                        String[] split = line.split(" ");
 
                         total += Double.parseDouble(line.split(" for ")[1].split(" ")[0].replace(",", ""));
                         tax += Double.parseDouble(line.split("\\[world] ")[1].split(" ")[3].replace("(", "").replace(",", ""));
