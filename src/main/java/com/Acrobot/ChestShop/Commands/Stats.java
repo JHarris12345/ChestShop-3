@@ -7,6 +7,7 @@ import com.j256.ormlite.stmt.query.In;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,8 +21,8 @@ import java.util.stream.Collectors;
 
 public class Stats implements TabExecutor {
 
-    private ChestShop plugin = ChestShop.getPlugin();
-    private DecimalFormat df = new DecimalFormat("#,###.##");
+    private static ChestShop plugin = ChestShop.getPlugin();
+    private static DecimalFormat df = new DecimalFormat("#,###.##");
 
 
     @Override
@@ -30,6 +31,14 @@ public class Stats implements TabExecutor {
         // /csstats [hours] (page)
         if (args.length == 1 || args.length == 2) {
             int page = 1;
+            String username;
+
+            if (!(sender instanceof Player)) {
+                sender.sendMessage(Utils.colour("&a[Shop] &fYou must be a player to use this command"));
+                return true;
+            }
+
+            username = sender.getName();
 
             if (!Utils.isNumber(args[0], false, false)) {
                 sender.sendMessage(Utils.colour("&a[Shop] &f'" + args[0] + "' is not a valid number of hours"));
@@ -46,15 +55,20 @@ public class Stats implements TabExecutor {
             }
 
             int hours = Integer.parseInt(args[0]);
-            sender.sendMessage(Utils.colour("&a[Shop] &fGenerating global chest shop stats for the last " + hours + " hour(s). This may take a while..."));
+            sender.sendMessage(Utils.colour("&a[Shop] &fGenerating global chest shop stats for the last " + hours + " hour" + ((hours > 1) ? "s" : "") + ". This may take a while..."));
 
             int finalPage = page;
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    List<String> stats = getStats(hours);
+                    List<String> stats = getStats(username, hours);
 
-                    int entriesPerPage = 5;
+                    if (stats.isEmpty()) {
+                        sender.sendMessage(Utils.colour("&a[Shop] &fThere are no stats to show over the last " + hours + " hour" + ((hours > 1) ? "s" : "")));
+                        return;
+                    }
+
+                    int entriesPerPage = 15;
                     int pagesNeeded = (int) Math.ceil((double) stats.size() / entriesPerPage);
 
                     sender.sendMessage(" ");
@@ -94,11 +108,12 @@ public class Stats implements TabExecutor {
         return List.of();
     }
 
-    private List<String> getStats(long hours) {
+    public static List<String> getStats(String username, long hours) {
         List<String> result = new ArrayList<>();
         LinkedHashMap<String, Double> chestshops = new LinkedHashMap<>(); // A map of the coords of every chest shop that had action and how much it earned the player (includes negative values for ones that lost the player money)
 
         File[] files = new File(plugin.getDataFolder(), "logs").listFiles();
+        String lowercaseName = username.toLowerCase();
 
         for (File file : files) {
             if (file.isDirectory()) continue;
@@ -127,6 +142,9 @@ public class Stats implements TabExecutor {
 
                 for (String line : lines) {
                     try {
+                        String lowercaseLine = line.toLowerCase();
+                        if (!lowercaseLine.contains(" " + lowercaseName + " ")) continue;
+
                         String[] split = line.split(" ");
                         String action = split[3];
 
@@ -138,6 +156,16 @@ public class Stats implements TabExecutor {
 
                         // Only the time frame stated
                         if (System.currentTimeMillis() - time > (hours * 60 * 60000)) continue;
+
+                        // Make sure the username is the one who owns the chest shop
+                        String receiver;
+                        if (earnedMoney) {
+                            receiver = line.split(" from ")[1].split(" ")[0];
+                        } else {
+                            receiver = line.split(" to ")[1].split(" ")[0];
+                        }
+
+                        if (!lowercaseName.equals(receiver.toLowerCase())) continue;
 
                         String location = line.split(" at \\[")[1];
                         location = "[" + location; // Add back the leading [ we removed for the split above (we included it in the split to make it a more accurate split)

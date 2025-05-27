@@ -123,7 +123,7 @@ public class Utils {
 
             for (int i=0; i<words.length; i++) {
                 if (i != words.length-1) {
-                    commandNoPageNumber.append(words[i]);
+                    commandNoPageNumber.append(words[i]).append(" ");
                 } else {
                     commandNoPageNumber.append("(page)");
                 }

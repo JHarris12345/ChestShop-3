@@ -39,6 +39,10 @@ commands:
     description: View your chestshop stats
     permission: chestshop.stats
     usage: /<command>
+  csstatsother:
+    description: View the chestshop stats of other players
+    permission: chestshop.stats.other
+    usage: /<command>
   csglobalstats:
     description: View global chestshop stats
     permission: chestshop.globalstats

@@ -42,6 +42,7 @@ public enum Permission {
     NOTIFY_TOGGLE("ChestShop.toggle"),
     ACCESS_TOGGLE("ChestShop.accesstoggle"),
     STATS("ChestShop.stats"),
+    STATS_OTHER("ChestShop.stats.other"),
     GLOBAL_STATS("ChestShop.globalstats"),
     ITEMINFO("ChestShop.iteminfo"),
     SHOPINFO("ChestShop.shopinfo"),
