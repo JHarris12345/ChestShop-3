@@ -3,6 +3,7 @@ package com.Acrobot.ChestShop.Commands;
 import com.Acrobot.ChestShop.ChestShop;
 import com.Acrobot.ChestShop.Utils.ChestShopStats;
 import com.Acrobot.ChestShop.Utils.Utils;
+import com.j256.ormlite.stmt.query.In;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -14,8 +15,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.text.DecimalFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,32 +23,61 @@ public class Stats implements TabExecutor {
     private ChestShop plugin = ChestShop.getPlugin();
     private DecimalFormat df = new DecimalFormat("#,###.##");
 
-    private HashMap<String, Long> dateToTimeCache = new HashMap<>(); // Prevents needing to do a try block with date parsing for EVERY log of the same date
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String @NotNull [] args) {
 
-        // /csstats [hours]
-        if (args.length == 1) {
+        // /csstats [hours] (page)
+        if (args.length == 1 || args.length == 2) {
+            int page = 1;
+
             if (!Utils.isNumber(args[0], false, false)) {
-                sender.sendMessage(Utils.colour("&c'" + args[0] + "' is not a valid number of hours"));
+                sender.sendMessage(Utils.colour("&a[Shop] &f'" + args[0] + "' is not a valid number of hours"));
                 return true;
             }
 
+            if (args.length == 2) {
+                if (!Utils.isNumber(args[1], false, false)) {
+                    sender.sendMessage(Utils.colour("&a[Shop] &f'" + args[0] + "' is not a valid page number"));
+                    return true;
+                }
+
+                page = Integer.parseInt(args[1]);
+            }
+
             int hours = Integer.parseInt(args[0]);
+            sender.sendMessage(Utils.colour("&a[Shop] &fGenerating global chest shop stats for the last " + hours + " hour(s). This may take a while..."));
 
-            sender.sendMessage(Utils.colour("&7Generating chest shop stats for the last " + hours + " hour(s). This may take a while..."));
-
+            int finalPage = page;
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    ChestShopStats stats = getStats(hours);
+                    List<String> stats = getStats(hours);
+
+                    int entriesPerPage = 5;
+                    int pagesNeeded = (int) Math.ceil((double) stats.size() / entriesPerPage);
 
                     sender.sendMessage(" ");
-                    sender.sendMessage(Utils.colour("&3&l&m====&3&l[ Chest Shop Stats - Last " + hours + " hour(s) ]&3&l&m===="));
-                    sender.sendMessage(Utils.colour("&bTotal sold volume: &f$" + df.format(stats.getTotalVolume())));
-                    sender.sendMessage(Utils.colour("&bTotal tax volume: &f$" + df.format(stats.getTotalVolume() - stats.getTotalAfterTax())));
-                    sender.sendMessage(Utils.colour("&3&l&m==========================================="));
+                    sender.sendMessage(Utils.colour("&a&l&m===&a&l[ &a&lChest Shop Stats - Last " + hours + " hour(s) &a&l]&m==="));
+
+                    // Start index = (page number * itemsPerPage) - itemsPerPage
+                    // End index = start index + (itemsPerPage - 1)
+
+                    int startIndex = (finalPage * entriesPerPage) - entriesPerPage;
+                    int endIndex = startIndex + (entriesPerPage - 1);
+
+                    if (endIndex >= stats.size()) endIndex = stats.size() - 1;
+
+                    for (int i=startIndex; i<=endIndex; i++) {
+                        String line = stats.get(i);
+                        sender.sendMessage(line);
+                    }
+
+                    boolean sentPageButtons = Utils.sendPageButtons(sender, pagesNeeded, finalPage,
+                            "/csstats " + hours + " " + (finalPage + 1),
+                            "/csstats " + hours + " " + (finalPage - 1),
+                            true);
+
                     sender.sendMessage(" ");
 
                 }
@@ -57,7 +85,7 @@ public class Stats implements TabExecutor {
             return true;
         }
 
-        sender.sendMessage(Utils.colour("&7Did you mean &b/csstats [hours]&7?"));
+        sender.sendMessage(Utils.colour("&a[Shop] &fDid you mean &a/csstats [hours]&f?"));
         return true;
     }
 
@@ -66,9 +94,9 @@ public class Stats implements TabExecutor {
         return List.of();
     }
 
-    private ChestShopStats getStats(long hours) {
-        double total = 0;
-        double tax = 0; // This is the total volume after tax is removed. NOT the total tax paid. Total tax paid would be total - tax
+    private List<String> getStats(long hours) {
+        List<String> result = new ArrayList<>();
+        LinkedHashMap<String, Double> chestshops = new LinkedHashMap<>(); // A map of the coords of every chest shop that had action and how much it earned the player (includes negative values for ones that lost the player money)
 
         File[] files = new File(plugin.getDataFolder(), "logs").listFiles();
 
@@ -93,24 +121,31 @@ public class Stats implements TabExecutor {
                 String lastLine = lines.getLast();
 
                 String lastLineTimeString = lastLine.substring(0, 22);
-                long lastLineTime = getLongTimeFromLogTime(lastLineTimeString);
+                long lastLineTime = Utils.getLongTimeFromLogTime(lastLineTimeString);
 
                 if (System.currentTimeMillis() - lastLineTime > (hours * 60 * 60000)) continue;
 
                 for (String line : lines) {
                     try {
-                        // TODO: If we ever remove this check and include lines that DON'T have tax, then we need to re-do the system so that
-                        // the totalAfterTax becomes totalTax and the tax is calculated for each individual line, else it will be off
-                        if (!line.contains("after tax)")) continue;
+                        String[] split = line.split(" ");
+                        String action = split[3];
+
+                        if (!action.equals("bought") && !action.equals("sold")) continue;
+                        boolean earnedMoney = (action.equals("bought"));
 
                         String timeString = line.substring(0, 22);
-                        long time = getLongTimeFromLogTime(timeString);
+                        long time = Utils.getLongTimeFromLogTime(timeString);
 
                         // Only the time frame stated
                         if (System.currentTimeMillis() - time > (hours * 60 * 60000)) continue;
 
-                        total += Double.parseDouble(line.split(" for ")[1].split(" ")[0].replace(",", ""));
-                        tax += Double.parseDouble(line.split("\\[world] ")[1].split(" ")[3].replace("(", "").replace(",", ""));
+                        String location = line.split(" at \\[")[1];
+                        location = "[" + location; // Add back the leading [ we removed for the split above (we included it in the split to make it a more accurate split)
+                        if (location.contains(" (")) location = location.split(" \\(")[0]; // Remove the tax section if it is there
+
+                        double price = Double.parseDouble(line.split(" for ")[1].split(" ")[0]);
+
+                        chestshops.put(location, chestshops.getOrDefault(location, 0d) + ((earnedMoney) ? price : (0 - price)));
 
                     } catch (Exception ex) {
                         plugin.getLogger().info("Error whilst calculating line");
@@ -126,28 +161,23 @@ public class Stats implements TabExecutor {
             }
         }
 
-        return new ChestShopStats(total, tax);
-    }
+        chestshops = chestshops.entrySet().stream()
+                .sorted((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()))  // Sort by value descending
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new  // To maintain insertion order after sorting
+                ));
 
-    private long getLongTimeFromLogTime(String logTime) {
-        long time = dateToTimeCache.getOrDefault(logTime, 0L);
+        for (Map.Entry<String, Double> entry : chestshops.entrySet()) {
+            String location = entry.getKey();
+            double value = entry.getValue();
 
-        if (time == 0) {
-            SimpleDateFormat sdf = new SimpleDateFormat("[dd-MMM-yyyy HH:mm:ss]");
-
-            try {
-                time = sdf.parse(logTime).getTime();
-                dateToTimeCache.put(logTime, time);
-
-            } catch (ParseException e) {
-                plugin.getLogger().info("Error parsing date for log time: ");
-                plugin.getLogger().info(logTime);
-
-                e.printStackTrace();
-                return 0;
-            }
+            // We need to manually remove the - sign else it gets put after the $ (like $-25) so we just do that formatting ourselves
+            result.add(Utils.colour("&f" + location + " " + ((value < 0) ? "&c-" : "&a") + "$" + ((value < 0) ? df.format((0 - value)) : df.format(value))));
         }
 
-        return time;
+        return result;
     }
 }

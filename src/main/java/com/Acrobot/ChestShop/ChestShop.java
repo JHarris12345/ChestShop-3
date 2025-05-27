@@ -36,7 +36,6 @@ import com.Acrobot.ChestShop.Listeners.PreTransaction.ErrorMessageSender;
 import com.Acrobot.ChestShop.Listeners.PreTransaction.PermissionChecker;
 import com.Acrobot.ChestShop.Listeners.ShopRemoval.ShopRefundListener;
 import com.Acrobot.ChestShop.Listeners.ShopRemoval.ShopRemovalLogger;
-import com.Acrobot.ChestShop.Logging.FileFormatter;
 import com.Acrobot.ChestShop.Metadata.ItemDatabase;
 import com.Acrobot.ChestShop.Signs.RestrictedSign;
 import com.Acrobot.ChestShop.UUIDs.NameManager;
@@ -153,6 +152,7 @@ public class ChestShop extends JavaPlugin {
         registerCommand("cstoggle", new Toggle(), Permission.NOTIFY_TOGGLE);
         registerCommand("csaccess", new AccessToggle(), Permission.ACCESS_TOGGLE);
         registerCommand("csstats", new Stats(), Permission.STATS);
+        registerCommand("csglobalstats", new GlobalStats(), Permission.GLOBAL_STATS);
 
         loadConfig();
 
