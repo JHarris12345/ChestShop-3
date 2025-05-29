@@ -1,5 +1,6 @@
 package com.Acrobot.ChestShop;
 
+import com.Acrobot.Breeze.Configuration.Configuration;
 import com.Acrobot.ChestShop.Commands.*;
 import com.Acrobot.ChestShop.Configuration.Messages;
 import com.Acrobot.ChestShop.Configuration.Properties;
@@ -154,7 +155,7 @@ public class ChestShop extends JavaPlugin {
     }
 
     public void loadConfig() {
-        saveDefaultConfig();
+        Configuration.pairFileAndClass(loadFile("config.yml"), Properties.class, getBukkitLogger());
 
         Messages.load();
 
