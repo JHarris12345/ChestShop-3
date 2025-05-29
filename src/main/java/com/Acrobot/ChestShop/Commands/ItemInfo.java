@@ -67,8 +67,7 @@ public class ItemInfo implements CommandExecutor {
     public static boolean sendItemName(CommandSender sender, ItemStack item, Messages.Message message) {
         try {
             Map<String, String> replacementMap = ImmutableMap.of("item", ItemUtil.getName(item));
-            if (!Properties.SHOWITEM_MESSAGE || !(sender instanceof Player)
-                    || !MaterialUtil.Show.sendMessage((Player) sender, sender.getName(), message, false, new ItemStack[]{item}, replacementMap)) {
+            if (!Properties.SHOWITEM_MESSAGE || !(sender instanceof Player)) {
                 message.send(sender, replacementMap);
             }
         } catch (IllegalArgumentException e) {

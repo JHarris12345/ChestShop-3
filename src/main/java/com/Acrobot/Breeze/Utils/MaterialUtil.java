@@ -6,8 +6,6 @@ import com.Acrobot.ChestShop.Configuration.Messages;
 import com.Acrobot.ChestShop.Configuration.Properties;
 import com.Acrobot.ChestShop.Events.MaterialParseEvent;
 import com.Acrobot.ChestShop.Utils.ItemUtil;
-import de.themoep.ShowItem.api.ShowItem;
-import de.themoep.minedown.adventure.Replacer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
@@ -562,84 +560,6 @@ public class MaterialUtil {
          */
         public static String getItemCode(ItemStack item) {
             return ChestShop.getItemDatabase().getItemCode(item);
-        }
-    }
-
-    public static class Show {
-        private static ShowItem showItem = null;
-
-        /**
-         * Lets the class know that it's safe to use the ShowItem methods now
-         *
-         * @param plugin
-         */
-        public static void initialize(Plugin plugin) {
-            showItem = (ShowItem) plugin;
-        }
-
-        /**
-         * Send a message with hover info and icons
-         *
-         * @param player  The player to send the message to
-         * @param message The raw message
-         * @param stock   The items in stock
-         */
-        public static boolean sendMessage(Player player, Messages.Message message, ItemStack[] stock, Map<String, String> replacementMap, String... replacements) {
-            return sendMessage(player, player.getName(), message, stock, replacementMap, replacements);
-        }
-
-        /**
-         * Send a message with hover info and icons
-         *
-         * @param player        The player to send the message to
-         * @param playerName    The name of the player in case he is offline and bungee messages are enabled
-         * @param message       The raw message
-         * @param stock         The items in stock
-         */
-        public static boolean sendMessage(Player player, String playerName, Messages.Message message, ItemStack[] stock, Map<String, String> replacementMap, String... replacements) {
-            return sendMessage(player, playerName, message, true, stock, replacementMap, replacements);
-        }
-
-        /**
-         * Send a message with hover info and icons
-         *
-         * @param player        The player to send the message to
-         * @param playerName    The name of the player in case he is offline and bungee messages are enabled
-         * @param message       The raw message
-         * @param showPrefix    If the prefix should show
-         * @param stock         The items in stock
-         */
-        public static boolean sendMessage(Player player, String playerName, Messages.Message message, boolean showPrefix, ItemStack[] stock, Map<String, String> replacementMap, String... replacements) {
-            if (showItem == null) {
-                return false;
-            }
-
-            TextComponent.Builder itemComponent = Component.text();
-            for (ItemStack item : InventoryUtil.mergeSimilarStacks(stock)) {
-                try {
-                    itemComponent.append(GsonComponentSerializer.gson().deserialize(showItem.getItemConverter().createComponent(item, Level.FINE).toJsonString(player)));
-                } catch (Exception e) {
-                    ChestShop.getPlugin().getLogger().log(Level.WARNING, "Error while trying to send message '" + message + "' to player " + player.getName() + ": " + e.getMessage());
-                    return false;
-                }
-            }
-
-            Map<String, String> newMap = new LinkedHashMap<>(replacementMap);
-            newMap.put("material", "item");
-            newMap.remove("item");
-            Component component = new Replacer()
-                    .placeholderSuffix("")
-                    .replace("item",itemComponent.build())
-                    .replaceIn(message.getComponent(player, showPrefix, newMap, replacements));
-            if (player != null) {
-                ChestShop.getAudiences().player(player).sendMessage(component);
-                return true;
-            } else if (playerName != null) {
-                ChestShop.sendBungeeMessage(playerName, component);
-                return true;
-            }
-
-            return true;
         }
     }
 }

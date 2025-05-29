@@ -1,6 +1,8 @@
 package com.Acrobot.ChestShop.Utils;
 
 import com.Acrobot.ChestShop.ChestShop;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -10,9 +12,15 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Scanner;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -137,5 +145,39 @@ public class Utils {
 
     public static boolean isPlayerBedrock(UUID uuid) {
         return uuid.toString().startsWith("00000000-0000-0000");
+    }
+
+    public static String createPasteLink(List<String> contentList) {
+        String content = String.join("\n", contentList);
+
+        try {
+            // The pastes.dev API URL for creating a new paste
+            URL url = new URL("https://api.pastes.dev/post");
+
+            // Open a connection
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json; utf-8");
+            connection.setRequestProperty("Accept", "application/json");
+            connection.setDoOutput(true);
+
+            // Send the request payload
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = content.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+
+            // Read the response
+            try (Scanner scanner = new Scanner(connection.getInputStream(), StandardCharsets.UTF_8)) {
+                String response = scanner.useDelimiter("\\A").next(); // This is the response from the server, which will contain the paste URL key
+                JsonObject jsonResponse = JsonParser.parseString(response).getAsJsonObject();
+
+                return "https://api.pastes.dev/" + jsonResponse.get("key").getAsString();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

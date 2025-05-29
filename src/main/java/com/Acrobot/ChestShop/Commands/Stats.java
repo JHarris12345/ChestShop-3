@@ -4,6 +4,11 @@ import com.Acrobot.ChestShop.ChestShop;
 import com.Acrobot.ChestShop.Utils.ChestShopStats;
 import com.Acrobot.ChestShop.Utils.Utils;
 import com.j256.ormlite.stmt.query.In;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -24,6 +29,8 @@ public class Stats implements TabExecutor {
     private static ChestShop plugin = ChestShop.getPlugin();
     private static DecimalFormat df = new DecimalFormat("#,###.##");
 
+    public static HashMap<String, String> downloadCache = new HashMap<>(); // A map of recent player names that have requested stats and their download link (so it doesn't need to be generated each time when switching pages)
+
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String @NotNull [] args) {
@@ -33,12 +40,12 @@ public class Stats implements TabExecutor {
             int page = 1;
             String username;
 
-            if (!(sender instanceof Player)) {
+            if (!(sender instanceof Player player)) {
                 sender.sendMessage(Utils.colour("&a[Shop] &fYou must be a player to use this command"));
                 return true;
             }
 
-            username = sender.getName();
+            username = player.getName();
 
             if (!Utils.isNumber(args[0], false, false)) {
                 sender.sendMessage(Utils.colour("&a[Shop] &f'" + args[0] + "' is not a valid number of hours"));
@@ -54,6 +61,11 @@ public class Stats implements TabExecutor {
                 page = Integer.parseInt(args[1]);
             }
 
+            // If they are scrolling through pages, don't clear the download link cache. If they re-ran the command again, clear it
+            if (args.length == 1) {
+                downloadCache.remove(username);
+            }
+
             int hours = Integer.parseInt(args[0]);
             sender.sendMessage(Utils.colour("&a[Shop] &fGenerating global chest shop stats for the last " + hours + " hour" + ((hours > 1) ? "s" : "") + ". This may take a while..."));
 
@@ -62,17 +74,26 @@ public class Stats implements TabExecutor {
                 @Override
                 public void run() {
                     List<String> stats = getStats(username, hours);
+                    String downloadLink = downloadCache.getOrDefault(username, null);
 
                     if (stats.isEmpty()) {
                         sender.sendMessage(Utils.colour("&a[Shop] &fThere are no stats to show over the last " + hours + " hour" + ((hours > 1) ? "s" : "")));
                         return;
                     }
 
+                    if (downloadLink == null) {
+                        List<String> downloadableStats = new ArrayList<>(); // The downloadable version can't have colours translated else it sends weird formatting
+                        stats.forEach(stat -> downloadableStats.add(ChatColor.stripColor(stat)));
+
+                        downloadLink = Utils.createPasteLink(downloadableStats);
+                        downloadCache.put(username, downloadLink);
+                    }
+
                     int entriesPerPage = 15;
                     int pagesNeeded = (int) Math.ceil((double) stats.size() / entriesPerPage);
 
                     sender.sendMessage(" ");
-                    sender.sendMessage(Utils.colour("&a&l&m===&a&l[ &a&lChest Shop Stats - Last " + hours + " hour(s) &a&l]&m==="));
+                    sender.sendMessage(Utils.colour("&a&l&m===&a&l[ &a&lChest Shop Stats - Last " + hours + " hour" + ((hours > 1) ? "s" : "") + " &a&l]&m==="));
 
                     // Start index = (page number * itemsPerPage) - itemsPerPage
                     // End index = start index + (itemsPerPage - 1)
@@ -91,6 +112,16 @@ public class Stats implements TabExecutor {
                             "/csstats " + hours + " " + (finalPage + 1),
                             "/csstats " + hours + " " + (finalPage - 1),
                             true);
+
+                    if (!Utils.isPlayerBedrock(player.getUniqueId())) {
+                        if (!sentPageButtons) sender.sendMessage("");
+
+                        TextComponent downloadButton = Component.text(Utils.colour("&e&l[&eDownload Stats&l]"));
+                        downloadButton = downloadButton.hoverEvent(HoverEvent.showText(Component.text("Click to download stats")));
+                        downloadButton = downloadButton.clickEvent(ClickEvent.openUrl(downloadLink));
+
+                        sender.sendMessage(downloadButton);
+                    }
 
                     sender.sendMessage(" ");
 

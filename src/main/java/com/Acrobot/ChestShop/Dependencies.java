@@ -7,7 +7,6 @@ import com.Acrobot.ChestShop.Listeners.Economy.Plugins.ReserveListener;
 import com.Acrobot.ChestShop.Listeners.Economy.Plugins.VaultListener;
 import com.Acrobot.ChestShop.Plugins.*;
 import com.google.common.collect.ImmutableMap;
-import org.bstats.charts.DrilldownPie;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -84,7 +83,7 @@ public class Dependencies implements Listener {
                             AbstractMap.SimpleEntry::getKey,
                             AbstractMap.SimpleEntry::getValue
                     ));
-            ChestShop.getMetrics().addCustomChart(new DrilldownPie("dependencies", () -> map));
+            //ChestShop.getMetrics().addCustomChart(new DrilldownPie("dependencies", () -> map));
             return true;
         }
         return false;
@@ -110,8 +109,8 @@ public class Dependencies implements Listener {
             return false;
         }
 
-        ChestShop.getMetrics().addCustomChart(ChestShop.createStaticDrilldownStat("economyAdapter", plugin, Bukkit.getPluginManager().getPlugin(plugin).getDescription().getVersion()));
-        ChestShop.getMetrics().addCustomChart(ChestShop.createStaticDrilldownStat("economyPlugin", economy::getProviderInfo));
+        //ChestShop.getMetrics().addCustomChart(ChestShop.createStaticDrilldownStat("economyAdapter", plugin, Bukkit.getPluginManager().getPlugin(plugin).getDescription().getVersion()));
+        //ChestShop.getMetrics().addCustomChart(ChestShop.createStaticDrilldownStat("economyPlugin", economy::getProviderInfo));
 
         ChestShop.registerListener(economy);
         ChestShop.getBukkitLogger().info(plugin + " loaded!");
@@ -137,33 +136,8 @@ public class Dependencies implements Listener {
 
         switch (dependency) {
             //Protection plugins
-            case LWC:
-                listener = new LightweightChestProtection();
-                break;
-            case Lockette:
-                listener = new Lockette();
-                break;
-            case LockettePro:
-                listener = new LockettePro();
-                break;
-            case Deadbolt:
-                listener = new Deadbolt();
-                break;
-            case SimpleChestLock:
-                listener = SimpleChestLock.getSimpleChestLock(plugin);
-                break;
             case BlockLocker:
                 listener = new BlockLocker();
-                break;
-            case Residence:
-                if (plugin.getDescription().getVersion().startsWith("2")) {
-                    ChestShop.getBukkitLogger().severe("You are using an old version of Residence! " +
-                            "Please update to the newest one, which supports UUIDs: http://ci.drtshock.net/job/Residence/");
-
-                    break;
-                }
-
-                listener = new ResidenceChestProtection();
                 break;
 
             //Terrain protection plugins
@@ -189,30 +163,6 @@ public class Dependencies implements Listener {
                     return false;
                 }
                 listener = new GriefPrevenentionBuilding(plugin);
-                break;
-
-            case RedProtect:
-                if (!Properties.REDPROTECT_INTEGRATION) {
-                    return false;
-                }
-                listener = new RedProtectBuilding(plugin);
-                break;
-
-            //Other plugins
-            case Heroes:
-                Heroes heroes = Heroes.getHeroes(plugin);
-
-                if (heroes == null) {
-                    return false;
-                }
-
-                listener = heroes;
-                break;
-            case ItemBridge:
-                listener = new ItemBridge();
-                break;
-            case ShowItem:
-                MaterialUtil.Show.initialize(plugin);
                 break;
         }
 

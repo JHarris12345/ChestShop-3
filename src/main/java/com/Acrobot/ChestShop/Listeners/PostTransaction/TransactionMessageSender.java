@@ -82,10 +82,6 @@ public class TransactionMessageSender implements Listener {
             replacementMap.put(replacements[i], replacements[i + 1]);
         }
 
-        if (Properties.SHOWITEM_MESSAGE && MaterialUtil.Show.sendMessage(player, playerName, rawMessage, transactionEvent.getStock(), replacementMap)) {
-            return;
-        }
-
         if (player != null) {
             replacementMap.put("item", ItemUtil.getItemList(transactionEvent.getStock()));
             rawMessage.sendWithPrefix(player, replacementMap);

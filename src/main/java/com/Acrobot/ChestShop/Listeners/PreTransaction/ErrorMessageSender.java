@@ -142,9 +142,6 @@ public class ErrorMessageSender implements Listener {
             }
 
             if (player != null) {
-                if (Properties.SHOWITEM_MESSAGE && MaterialUtil.Show.sendMessage(player, message, stock, Collections.emptyMap(), replacements)) {
-                    return;
-                }
                 String items = ItemUtil.getItemList(stock);
                 message.sendWithPrefix(player,
                         ImmutableMap.of("material", items, "item", items), replacements);

@@ -1,6 +1,6 @@
 name: ChestShop
 main: com.Acrobot.ChestShop.ChestShop
-version: '${bukkit.plugin.version}'
+version: '1.0'
 author: Acrobot
 authors: ['https://github.com/ChestShop-authors/ChestShop-3/contributors']
 description: A chest shop for economy plugins.
