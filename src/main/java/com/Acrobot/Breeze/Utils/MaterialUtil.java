@@ -139,7 +139,8 @@ public class MaterialUtil {
             return true;
         }
 
-        ItemStack twoDumped = YAML.loadAs(YAML.dump(two), ItemStack.class);
+        ItemStack twoDumped = two.clone();
+        //ItemStack twoDumped = YAML.loadAs(YAML.dump(two), ItemStack.class); // This throws an error in 1.21.8
         if (oneDumped.isSimilar(twoDumped)) {
             return true;
         }
