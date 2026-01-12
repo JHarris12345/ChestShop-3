@@ -346,6 +346,8 @@ public class InventoryUtil {
                     iStack.setAmount(iStack.getAmount() + item.getAmount());
                     continue Iterating;
                 }
+
+                // TODO: Could have an else statement here that removes unique ID PDC from items if it exists (to allow us to add unique ID PDC for anti-duping purposes
             }
 
             itemList.add(item.clone());
