@@ -79,6 +79,12 @@ public class BlockPlace implements Listener {
                 return;
         }
 
+        Player player = event.getPlayer();
+
+        if (Permission.has(player, Permission.ADMIN)) {
+            return;
+        }
+
         for (BlockFace face : searchDirections) {
             Block relative = placed.getRelative(face);
 
@@ -86,8 +92,15 @@ public class BlockPlace implements Listener {
                 continue;
             }
 
-            if (!Security.canAccess(event.getPlayer(), relative)) {
-                Messages.ACCESS_DENIED.sendWithPrefix(event.getPlayer());
+            if (!Security.canAccess(player, relative)) {
+                Messages.ACCESS_DENIED.sendWithPrefix(player);
+                event.setCancelled(true);
+                return;
+            }
+
+            org.bukkit.block.Sign sign = uBlock.getConnectedSign(relative);
+            if (sign != null && ChestShopSign.isValid(sign) && !ChestShopSign.isOwner(player, sign)) {
+                Messages.ACCESS_DENIED.sendWithPrefix(player);
                 event.setCancelled(true);
                 return;
             }
