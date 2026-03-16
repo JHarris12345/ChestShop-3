@@ -424,6 +424,14 @@ public class MaterialUtil {
 
         ItemMeta meta = getMetadata(itemName);
 
+        // If the item name contains a metadata code (e.g. "#1Rp") but the code
+        // could not be resolved from the database, return null instead of a plain
+        // item. This prevents shops from silently accepting unenchanted/plain items
+        // when the metadata entry is missing.
+        if (meta == null && hasMetadataCode(itemName)) {
+            return null;
+        }
+
         if (durability != null) {
             if (meta == null) {
                 meta = itemStack.getItemMeta();
@@ -474,6 +482,10 @@ public class MaterialUtil {
      * @param itemName Item name
      * @return Metadata found
      */
+    public static boolean hasMetadataCode(String itemName) {
+        return METADATA.matcher(itemName).find();
+    }
+
     public static ItemMeta getMetadata(String itemName) {
         Matcher m = METADATA.matcher(itemName);
 
