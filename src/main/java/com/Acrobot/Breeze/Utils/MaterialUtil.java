@@ -424,6 +424,14 @@ public class MaterialUtil {
 
         ItemMeta meta = getMetadata(itemName);
 
+        // If the item name contains a metadata code (e.g. "#1Rp") but the code
+        // could not be resolved from the database, return null instead of a plain
+        // item. This prevents shops from silently accepting unenchanted/plain items
+        // when the metadata entry is missing.
+        if (meta == null && hasMetadataCode(itemName)) {
+            return null;
+        }
+
         if (durability != null) {
             if (meta == null) {
                 meta = itemStack.getItemMeta();
@@ -438,6 +446,11 @@ public class MaterialUtil {
         }
 
         return itemStack;
+    }
+
+    // Returns true if the item contains a metadata code (like Nether Star #1RP)
+    public static boolean hasMetadataCode(String itemName) {
+        return METADATA.matcher(itemName).find();
     }
 
     /**
