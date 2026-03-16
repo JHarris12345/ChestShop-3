@@ -29,6 +29,7 @@ public class Stats implements TabExecutor {
     private static ChestShop plugin = ChestShop.getPlugin();
     private static DecimalFormat df = new DecimalFormat("#,###.##");
 
+    private List<UUID> checkingStats = new ArrayList<>(); // A list of everyone checking stats so they can't run the command again whilst their current is still processing (can cause memory crashes)
     public static HashMap<String, String> downloadCache = new HashMap<>(); // A map of recent player names that have requested stats and their download link (so it doesn't need to be generated each time when switching pages)
 
 
@@ -60,6 +61,13 @@ public class Stats implements TabExecutor {
 
                 page = Integer.parseInt(args[1]);
             }
+
+            if (checkingStats.contains(player.getUniqueId())) {
+                player.sendMessage(Utils.colour("&cYou are already generating your chest shop stats. Wait for that to complete first"));
+                return true;
+            }
+
+            checkingStats.add(player.getUniqueId());
 
             // If they are scrolling through pages, don't clear the download link cache. If they re-ran the command again, clear it
             if (args.length == 1) {
@@ -125,6 +133,7 @@ public class Stats implements TabExecutor {
 
                     sender.sendMessage(" ");
 
+                    checkingStats.remove(player.getUniqueId());
                 }
             }.runTaskAsynchronously(plugin);
             return true;
