@@ -10,12 +10,17 @@ import com.Acrobot.ChestShop.Listeners.Block.Break.SignBreak;
 import com.Acrobot.ChestShop.Signs.ChestShopSign;
 import com.Acrobot.ChestShop.UUIDs.NameManager;
 import com.Acrobot.ChestShop.Utils.uBlock;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.block.sign.Side;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.Map;
 
 import static com.Acrobot.ChestShop.Permission.OTHER_NAME_DESTROY;
 
@@ -75,7 +80,14 @@ public class SignCreate implements Listener {
 
         if (preEvent.getOutcome().shouldBreakSign()) {
             event.setCancelled(true);
-            signBlock.breakNaturally();
+
+            if (event.getPlayer().getGameMode() == GameMode.SURVIVAL) {
+                String material = sign.getType().toString().replace("WALL_", "");
+                event.getPlayer().getInventory().addItem(new ItemStack(Material.valueOf(material)));
+            }
+
+            signBlock.setType(Material.AIR);
+
             ChestShop.logDebug("Shop sign creation at " + sign.getLocation() + " by " + event.getPlayer().getName() + " was cancelled (creation outcome: " + preEvent.getOutcome() + ") and the sign broken");
             return;
         }

@@ -69,12 +69,22 @@ public class BlockPlace implements Listener {
         List<BlockFace> searchDirections = new ArrayList<>();
         switch (placed.getType()) {
             case HOPPER:
+            case RAIL:
+            case ACTIVATOR_RAIL:
+            case DETECTOR_RAIL:
+            case POWERED_RAIL:
                 searchDirections.add(BlockFace.UP);
-                searchDirections.add(((Directional) placed.getBlockData()).getFacing());
+
+                if (placed.getBlockData() instanceof Directional directional) {
+                    searchDirections.add(directional.getFacing());
+                }
+
                 break;
+
             case DROPPER:
                 searchDirections.add(((Directional) placed.getBlockData()).getFacing());
                 break;
+
             default:
                 return;
         }
