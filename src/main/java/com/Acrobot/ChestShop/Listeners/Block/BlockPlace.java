@@ -9,10 +9,13 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Directional;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityPlaceEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +94,36 @@ public class BlockPlace implements Listener {
                 event.setCancelled(true);
                 return;
             }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public static void onHopperMinecartPlace(EntityPlaceEvent event) {
+        Entity entity = event.getEntity();
+
+        if (entity.getType() != EntityType.HOPPER_MINECART) {
+            return;
+        }
+
+        Player player = event.getPlayer();
+        if (player == null) {
+            return;
+        }
+
+        if (Permission.has(player, Permission.ADMIN)) {
+            return;
+        }
+
+        // Hopper minecarts pull from the block above them
+        Block above = entity.getLocation().getBlock().getRelative(BlockFace.UP);
+
+        if (!uBlock.couldBeShopContainer(above)) {
+            return;
+        }
+
+        if (!Security.canAccess(player, above)) {
+            Messages.ACCESS_DENIED.sendWithPrefix(player);
+            event.setCancelled(true);
         }
     }
 }

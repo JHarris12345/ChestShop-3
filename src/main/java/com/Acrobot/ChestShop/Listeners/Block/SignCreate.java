@@ -10,12 +10,15 @@ import com.Acrobot.ChestShop.Listeners.Block.Break.SignBreak;
 import com.Acrobot.ChestShop.Signs.ChestShopSign;
 import com.Acrobot.ChestShop.UUIDs.NameManager;
 import com.Acrobot.ChestShop.Utils.uBlock;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.block.sign.Side;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.inventory.ItemStack;
 
 import static com.Acrobot.ChestShop.Permission.OTHER_NAME_DESTROY;
 
@@ -75,8 +78,17 @@ public class SignCreate implements Listener {
 
         if (preEvent.getOutcome().shouldBreakSign()) {
             event.setCancelled(true);
-            signBlock.breakNaturally();
-            ChestShop.logDebug("Shop sign creation at " + sign.getLocation() + " by " + event.getPlayer().getName() + " was cancelled (creation outcome: " + preEvent.getOutcome() + ") and the sign broken");
+            // Remove the sign without dropping it and return it to the player's inventory
+            java.util.Collection<ItemStack> drops = signBlock.getDrops();
+            signBlock.setType(Material.AIR);
+            Player creator = event.getPlayer();
+            for (ItemStack drop : drops) {
+                java.util.Map<Integer, ItemStack> overflow = creator.getInventory().addItem(drop);
+                for (ItemStack extra : overflow.values()) {
+                    creator.getWorld().dropItemNaturally(creator.getLocation(), extra);
+                }
+            }
+            ChestShop.logDebug("Shop sign creation at " + sign.getLocation() + " by " + event.getPlayer().getName() + " was cancelled (creation outcome: " + preEvent.getOutcome() + ") and the sign returned to inventory");
             return;
         }
 
