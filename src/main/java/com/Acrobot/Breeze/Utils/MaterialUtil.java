@@ -11,12 +11,14 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.file.YamlConstructor;
 import org.bukkit.configuration.file.YamlRepresenter;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.plugin.Plugin;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -89,6 +91,27 @@ public class MaterialUtil {
     }
 
     /**
+     * Clears specific PDC entries from an item's meta before comparison.
+     * Fill in this method with the NamespacedKeys you want to strip before comparing items.
+     *
+     * @param item The cloned ItemStack to clear PDC entries from
+     */
+    public static void clearPDC(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) return;
+
+        ItemMeta meta = item.getItemMeta();
+        PersistentDataContainer pdc = meta.getPersistentDataContainer();
+
+        Plugin ae = Bukkit.getPluginManager().getPlugin("AdvancedEnchantments");
+        if (ae != null) {
+            pdc.remove(new NamespacedKey(ae, "ae_gkit_id"));
+            pdc.remove(new NamespacedKey(ae, "ae_gkit_spawn_time"));
+        }
+        
+        item.setItemMeta(meta);
+    }
+
+    /**
      * Checks if the itemStacks are equal, ignoring their amount
      *
      * @param one first itemStack
@@ -99,6 +122,13 @@ public class MaterialUtil {
         if (one == null || two == null) {
             return one == two;
         }
+
+        // Clone items and clear specific PDC entries before comparison
+        one = one.clone();
+        two = two.clone();
+        clearPDC(one);
+        clearPDC(two);
+
         if (one.isSimilar(two)) {
             return true;
         }
