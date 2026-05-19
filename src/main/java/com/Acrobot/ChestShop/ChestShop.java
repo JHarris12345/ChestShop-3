@@ -38,6 +38,7 @@ import com.Acrobot.ChestShop.Metadata.ItemDatabase;
 import com.Acrobot.ChestShop.Signs.RestrictedSign;
 import com.Acrobot.ChestShop.UUIDs.NameManager;
 
+import com.Acrobot.ChestShop.Utils.Placeholders;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 
@@ -114,6 +115,9 @@ public class ChestShop extends JavaPlugin {
         if (!handleMigrations()) {
             return;
         }
+
+        // Register placeholders
+        new Placeholders(this).register();
 
         registerCommand("iteminfo", new ItemInfo(), Permission.ITEMINFO);
         registerCommand("shopinfo", new ShopInfo(), Permission.SHOPINFO);
