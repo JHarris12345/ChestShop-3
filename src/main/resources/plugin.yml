@@ -47,6 +47,10 @@ commands:
     description: View global chestshop stats
     permission: chestshop.globalstats
     usage: /<command>
+  csconvert:
+    description: Convert old-format shop signs in loaded chunks to the new format
+    permission: chestshop.admin
+    usage: /<command>
 
 permissions:
   ChestShop.*:
