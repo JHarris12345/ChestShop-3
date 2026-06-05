@@ -1,5 +1,6 @@
 package com.Acrobot.ChestShop.Inventories;
 
+import com.Acrobot.Breeze.Utils.BlockUtil;
 import com.Acrobot.ChestShop.Listeners.Player.PlayerInteract;
 import com.Acrobot.ChestShop.Signs.ChestShopSign;
 import net.kyori.adventure.text.Component;
@@ -173,7 +174,7 @@ public class AmountAnvilGUI implements Listener {
     }
 
     private Sign currentSign() {
-        if (signBlock == null || !com.Acrobot.Breeze.Utils.BlockUtil.isSign(signBlock)) {
+        if (signBlock == null || !BlockUtil.isSign(signBlock)) {
             return null;
         }
         Sign sign = (Sign) getState(signBlock, false);

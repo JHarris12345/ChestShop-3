@@ -121,7 +121,7 @@ public class PlayerInteract implements Listener {
                         itemCode = ItemUtil.getSignName(item);
                     } catch (IllegalArgumentException e) {
                         player.sendMessage(ChatColor.RED + "Error while generating shop sign item name. Please contact an admin or take a look at the console/log!");
-                        com.Acrobot.ChestShop.ChestShop.getPlugin().getLogger().log(Level.SEVERE, "Error while generating shop sign item name", e);
+                        ChestShop.getPlugin().getLogger().log(Level.SEVERE, "Error while generating shop sign item name", e);
                         return;
                     }
 

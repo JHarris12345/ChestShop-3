@@ -80,7 +80,7 @@ public class SignCreate implements Listener {
 
         // Mark the price line with a GC suffix so the rest of the pipeline knows the currency.
         String priceLine = priceInput;
-        String currencyLower = currencyInput.toLowerCase(java.util.Locale.ROOT);
+        String currencyLower = currencyInput.toLowerCase(Locale.ROOT);
         if (currencyLower.equals("gc") || currencyLower.startsWith("giftcard")) {
             priceLine = priceInput + " " + ChestShopSign.GC_SUFFIX;
         }
