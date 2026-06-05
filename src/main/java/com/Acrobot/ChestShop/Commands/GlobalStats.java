@@ -47,6 +47,7 @@ public class GlobalStats implements TabExecutor {
                     sender.sendMessage(Utils.colour("&a&l&m===&a&l[ &a&lChest Shop Stats - Last " + hours + " hour(s) &a&l]&m==="));
                     sender.sendMessage(Utils.colour("&aTotal sold volume: &f$" + df.format(stats.getTotalVolume())));
                     sender.sendMessage(Utils.colour("&aTotal tax volume: &f$" + df.format(stats.getTotalVolume() - stats.getTotalAfterTax())));
+                    sender.sendMessage(Utils.colour("&aTotal GC volume: &f" + df.format(stats.getGcVolume()) + " GC"));
                     sender.sendMessage(" ");
 
                 }
@@ -66,6 +67,7 @@ public class GlobalStats implements TabExecutor {
     private ChestShopStats getStats(long hours) {
         double total = 0;
         double tax = 0; // This is the total volume after tax is removed. NOT the total tax paid. Total tax paid would be total - tax
+        double gcVolume = 0; // GC trades are never taxed and tracked separately so currencies don't combine
 
         File[] files = new File(plugin.getDataFolder(), "logs").listFiles();
 
@@ -96,6 +98,19 @@ public class GlobalStats implements TabExecutor {
 
                 for (String line : lines) {
                     try {
+                        // GC trades are never taxed (so they have no "after tax)" suffix) - count them separately
+                        if ((line.contains(" bought ") || line.contains(" sold ")) && line.contains(" for ")) {
+                            String[] forTokens = line.split(" for ")[1].split(" ");
+                            if (forTokens.length > 1 && forTokens[1].equalsIgnoreCase("GC")) {
+                                String gcTimeString = line.substring(0, 22);
+                                long gcTime = Utils.getLongTimeFromLogTime(gcTimeString);
+                                if (System.currentTimeMillis() - gcTime <= (hours * 60 * 60000)) {
+                                    gcVolume += Double.parseDouble(forTokens[0].replace(",", ""));
+                                }
+                                continue;
+                            }
+                        }
+
                         // TODO: If we ever remove this check and include lines that DON'T have tax, then we need to re-do the system so that the totalAfterTax
                         // becomes totalTax and the tax is calculated for each individual line, else it will be off (see how auction house stats command does it)
                         if (!line.contains("after tax)")) continue;
@@ -123,6 +138,6 @@ public class GlobalStats implements TabExecutor {
             }
         }
 
-        return new ChestShopStats(total, tax);
+        return new ChestShopStats(total, tax, gcVolume);
     }
 }

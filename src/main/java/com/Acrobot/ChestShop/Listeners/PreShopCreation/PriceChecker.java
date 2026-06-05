@@ -38,6 +38,8 @@ public class PriceChecker implements Listener {
         int scale = Math.min(Math.max(Properties.PRICE_PRECISION, 0), 2);
         price = price.setScale(scale, RoundingMode.HALF_UP);
 
-        event.setSignLine(PRICE_LINE, ChestShopSign.PRICE_COLOR + ChestShopSign.formatPrice(price, currency));
+        ChestShopSign.ShopType type = ChestShopSign.getShopType(event.getSignLines());
+        String color = type == null ? ChestShopSign.BUY_COLOR : ChestShopSign.getColor(type);
+        event.setSignLine(PRICE_LINE, color + ChestShopSign.formatPrice(price, currency) + " each");
     }
 }

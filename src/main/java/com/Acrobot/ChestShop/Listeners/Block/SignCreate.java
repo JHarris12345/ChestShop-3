@@ -88,7 +88,7 @@ public class SignCreate implements Listener {
         String[] lines = new String[]{
                 ChestShopSign.getLabel(type),
                 "",
-                ChestShopSign.LINE_COLOR + "1x " + itemInput,
+                ChestShopSign.LINE_COLOR + itemInput,
                 priceLine
         };
 

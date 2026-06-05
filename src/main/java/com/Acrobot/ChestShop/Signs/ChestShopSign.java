@@ -27,8 +27,6 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.Acrobot.Breeze.Utils.ImplementationAdapter.getState;
 
@@ -49,32 +47,36 @@ import static com.Acrobot.Breeze.Utils.ImplementationAdapter.getState;
 public class ChestShopSign {
     public static final byte TYPE_LINE = 0;
     public static final byte NAME_LINE = 1;
-    public static final byte QUANTITY_LINE = 2;
-    // The item now shares the quantity line ("<amount>x <item>"); kept for compatibility.
+    public static final byte ITEM_LINE = 2;
     public static final byte PRICE_LINE = 3;
-    public static final byte ITEM_LINE = QUANTITY_LINE;
+    // Shops always trade one item at a time, so there is no separate quantity line.
+    public static final byte QUANTITY_LINE = ITEM_LINE;
 
     public static final String AUTOFILL_CODE = "?";
 
     public static final String BUY_LABEL_TEXT = "[Click to buy]";
     public static final String SELL_LABEL_TEXT = "[Click to sell]";
 
-    /** Colour applied to the type label (&a&l). */
-    public static final String LABEL_COLOR = ChatColor.GREEN.toString() + ChatColor.BOLD;
     /** Colour applied to the owner and item lines (&f). */
     public static final String LINE_COLOR = ChatColor.WHITE.toString();
-    /** Colour applied to the price line (&a). */
-    public static final String PRICE_COLOR = ChatColor.GREEN.toString();
+    /** Colour applied to buy signs - label and price (&a). */
+    public static final String BUY_COLOR = ChatColor.GREEN.toString();
+    /** Colour applied to sell signs - label and price (&e). */
+    public static final String SELL_COLOR = ChatColor.YELLOW.toString();
 
-    public static final String BUY_LABEL = LABEL_COLOR + BUY_LABEL_TEXT;
-    public static final String SELL_LABEL = LABEL_COLOR + SELL_LABEL_TEXT;
+    public static final String BUY_LABEL = BUY_COLOR + ChatColor.BOLD + BUY_LABEL_TEXT;
+    public static final String SELL_LABEL = SELL_COLOR + ChatColor.BOLD + SELL_LABEL_TEXT;
 
     /** Suffix used to mark a giftcards (GC) price on a sign. */
     public static final String GC_SUFFIX = "GC";
 
-    private static final Pattern MERGED_ITEM_PATTERN = Pattern.compile("(?i)^\\s*([0-9]+)\\s*x\\s*(.*)$");
+    private static final DecimalFormat SHORT_FORMAT = new DecimalFormat("###.##", new DecimalFormatSymbols(Locale.US));
 
-    private static final DecimalFormat PRICE_FORMAT = new DecimalFormat("#,##0.00", new DecimalFormatSymbols(Locale.US));
+    private static final BigDecimal THOUSAND = BigDecimal.valueOf(1_000L);
+    private static final BigDecimal MILLION = BigDecimal.valueOf(1_000_000L);
+    private static final BigDecimal BILLION = BigDecimal.valueOf(1_000_000_000L);
+    private static final BigDecimal TRILLION = BigDecimal.valueOf(1_000_000_000_000L);
+    private static final BigDecimal QUADRILLION = BigDecimal.valueOf(1_000_000_000_000_000L);
 
     /**
      * The currency a shop trades in.
@@ -307,7 +309,8 @@ public class ChestShopSign {
         if (!isNewFormat(lines)) {
             return LegacyChestShopSign.getQuantityLine(lines);
         }
-        return lines.length > QUANTITY_LINE ? StringUtil.strip(StringUtil.stripColourCodes(lines[QUANTITY_LINE])) : "";
+        // New shops have no quantity line; the item sits on its own line.
+        return getItem(lines);
     }
 
     public static int getQuantity(Sign sign) throws IllegalArgumentException {
@@ -318,11 +321,8 @@ public class ChestShopSign {
         if (!isNewFormat(lines)) {
             return LegacyChestShopSign.getQuantity(lines);
         }
-        Matcher matcher = MERGED_ITEM_PATTERN.matcher(getQuantityLine(lines));
-        if (!matcher.matches()) {
-            throw new NumberFormatException("No quantity on the shop sign");
-        }
-        return Integer.parseInt(matcher.group(1));
+        // New shops always trade one item at a time.
+        return 1;
     }
 
     /**
@@ -390,17 +390,13 @@ public class ChestShopSign {
         if (!isNewFormat(lines)) {
             return LegacyChestShopSign.getItem(lines);
         }
-        String line = getQuantityLine(lines);
-        Matcher matcher = MERGED_ITEM_PATTERN.matcher(line);
-        if (matcher.matches()) {
-            return StringUtil.strip(matcher.group(2));
-        }
-        return line;
+        return lines.length > ITEM_LINE ? StringUtil.strip(StringUtil.stripColourCodes(lines[ITEM_LINE])) : "";
     }
 
     /**
-     * Parse a money value off a price line, ignoring any currency symbol,
-     * grouping separators and surrounding text (e.g. "$1,234.56" -&gt; 1234.56).
+     * Parse a money value off a price line, ignoring the currency symbol/word,
+     * grouping separators, the "each" suffix and any short-number suffix
+     * (e.g. "$5.4k each" -&gt; 5400, "4.23 GC each" -&gt; 4.23).
      *
      * @param line The raw price line
      * @return The parsed value, or {@link PriceUtil#NO_PRICE} if it is not a number
@@ -409,12 +405,37 @@ public class ChestShopSign {
         if (line == null) {
             return PriceUtil.NO_PRICE;
         }
-        String cleaned = StringUtil.stripColourCodes(line).replaceAll("[^0-9.]", "");
+
+        String cleaned = StringUtil.stripColourCodes(line).toLowerCase(Locale.ROOT)
+                .replace("giftcards", "")
+                .replace("giftcard", "")
+                .replace("each", "")
+                .replace("gc", "")
+                .replace("$", "")
+                .replace(",", "")
+                .replace(" ", "")
+                .trim();
+
         if (cleaned.isEmpty() || cleaned.equals(".")) {
             return PriceUtil.NO_PRICE;
         }
+
+        BigDecimal multiplier = BigDecimal.ONE;
+        char last = cleaned.charAt(cleaned.length() - 1);
+        switch (last) {
+            case 'k': multiplier = THOUSAND; break;
+            case 'm': multiplier = MILLION; break;
+            case 'b': multiplier = BILLION; break;
+            case 't': multiplier = TRILLION; break;
+            case 'q': multiplier = QUADRILLION; break;
+            default: break;
+        }
+        if (multiplier.compareTo(BigDecimal.ONE) != 0) {
+            cleaned = cleaned.substring(0, cleaned.length() - 1);
+        }
+
         try {
-            BigDecimal value = new BigDecimal(cleaned);
+            BigDecimal value = new BigDecimal(cleaned).multiply(multiplier);
             if (value.compareTo(BigDecimal.ZERO) < 0 || value.compareTo(PriceUtil.MAX) > 0) {
                 return PriceUtil.NO_PRICE;
             }
@@ -425,7 +446,7 @@ public class ChestShopSign {
     }
 
     /**
-     * Format a money price for display, e.g. "$1,234.56".
+     * Format a money price for display, e.g. "$5.4k".
      * @param value The value
      * @return The formatted price
      */
@@ -434,17 +455,59 @@ public class ChestShopSign {
     }
 
     /**
-     * Format a price for display in the given currency, e.g. "$1,234.56" or
-     * "1,234.56 GC".
+     * Format a price for display in the given currency using short numbers,
+     * e.g. "$50k" or "4.23 GC".
      * @param value The value
      * @param currency The currency
      * @return The formatted price
      */
     public static String formatPrice(BigDecimal value, Currency currency) {
+        String number = formatShortNumber(value);
         if (currency == Currency.GC) {
-            return PRICE_FORMAT.format(value) + " " + GC_SUFFIX;
+            return number + " " + GC_SUFFIX;
         }
-        return "$" + PRICE_FORMAT.format(value);
+        return "$" + number;
+    }
+
+    /**
+     * Abbreviate a number so it fits on a sign, e.g. 50000 -&gt; "50k",
+     * 5250000 -&gt; "5.25m", 4.23 -&gt; "4.23". Adapted from InsanityCore's
+     * {@code Utils.formatNumber}.
+     *
+     * @param value The value
+     * @return The abbreviated number
+     */
+    public static String formatShortNumber(BigDecimal value) {
+        double number = value.doubleValue();
+
+        double trillions = number / 1_000_000_000_000d;
+        if (trillions >= 1) {
+            String s = SHORT_FORMAT.format(trillions);
+            return Double.parseDouble(s) == 1000 ? "1q" : s + "t";
+        }
+        double billions = number / 1_000_000_000d;
+        if (billions >= 1) {
+            String s = SHORT_FORMAT.format(billions);
+            return Double.parseDouble(s) == 1000 ? "1t" : s + "b";
+        }
+        double millions = number / 1_000_000d;
+        if (millions >= 1) {
+            String s = SHORT_FORMAT.format(millions);
+            return Double.parseDouble(s) == 1000 ? "1b" : s + "m";
+        }
+        double thousands = number / 1_000d;
+        if (thousands >= 1) {
+            String s = SHORT_FORMAT.format(thousands);
+            return Double.parseDouble(s) == 1000 ? "1m" : s + "k";
+        }
+        return SHORT_FORMAT.format(number);
+    }
+
+    /**
+     * @return the colour applied to a shop type's label and price (&a buy / &e sell)
+     */
+    public static String getColor(ShopType type) {
+        return type == ShopType.SELL ? SELL_COLOR : BUY_COLOR;
     }
 
     /**
@@ -495,8 +558,8 @@ public class ChestShopSign {
         return new String[]{
                 getLabel(type),
                 LINE_COLOR + owner,
-                LINE_COLOR + "1x " + item,
-                PRICE_COLOR + formatPrice(price, currency)
+                LINE_COLOR + item,
+                getColor(type) + formatPrice(price, currency) + " each"
         };
     }
 

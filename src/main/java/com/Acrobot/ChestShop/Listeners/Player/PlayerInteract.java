@@ -125,12 +125,12 @@ public class PlayerInteract implements Listener {
                         return;
                     }
 
-                    if (StringUtil.getMinecraftStringWidth("1x " + itemCode) > MaterialUtil.MAXIMUM_SIGN_WIDTH) {
+                    if (StringUtil.getMinecraftStringWidth(itemCode) > MaterialUtil.MAXIMUM_SIGN_WIDTH) {
                         Messages.INVALID_SHOP_DETECTED.sendWithPrefix(player);
                         return;
                     }
 
-                    sign.setLine(QUANTITY_LINE, ChestShopSign.LINE_COLOR + "1x " + itemCode);
+                    sign.setLine(ITEM_LINE, ChestShopSign.LINE_COLOR + itemCode);
                     sign.update();
                 } else {
                     Messages.NO_ITEM_IN_HAND.sendWithPrefix(player);

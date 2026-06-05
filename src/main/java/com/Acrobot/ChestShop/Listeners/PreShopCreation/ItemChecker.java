@@ -20,7 +20,7 @@ import static com.Acrobot.Breeze.Utils.MaterialUtil.MAXIMUM_SIGN_WIDTH;
 import static com.Acrobot.ChestShop.Events.PreShopCreationEvent.CreationOutcome.INVALID_ITEM;
 import static com.Acrobot.ChestShop.Events.PreShopCreationEvent.CreationOutcome.ITEM_AUTOFILL;
 import static com.Acrobot.ChestShop.Signs.ChestShopSign.AUTOFILL_CODE;
-import static com.Acrobot.ChestShop.Signs.ChestShopSign.QUANTITY_LINE;
+import static com.Acrobot.ChestShop.Signs.ChestShopSign.ITEM_LINE;
 
 /**
  * Validates the item and writes the merged "&lt;amount&gt;x &lt;item&gt;" line.
@@ -50,7 +50,7 @@ public class ItemChecker implements Listener {
                 }
 
                 if (item == null) {
-                    event.setSignLine(QUANTITY_LINE, ChestShopSign.LINE_COLOR + "1x " + ChatColor.BOLD + AUTOFILL_CODE);
+                    event.setSignLine(ITEM_LINE, ChestShopSign.LINE_COLOR + ChatColor.BOLD + AUTOFILL_CODE);
                     event.setOutcome(ITEM_AUTOFILL);
                     return;
                 }
@@ -62,12 +62,11 @@ public class ItemChecker implements Listener {
 
         itemCode = ItemUtil.getSignName(item);
 
-        // Shops always trade one item at a time, rendered as "1x <item>".
-        if (StringUtil.getMinecraftStringWidth("1x " + itemCode) > MAXIMUM_SIGN_WIDTH) {
+        if (StringUtil.getMinecraftStringWidth(itemCode) > MAXIMUM_SIGN_WIDTH) {
             event.setOutcome(INVALID_ITEM);
             return;
         }
 
-        event.setSignLine(QUANTITY_LINE, ChestShopSign.LINE_COLOR + "1x " + itemCode);
+        event.setSignLine(ITEM_LINE, ChestShopSign.LINE_COLOR + itemCode);
     }
 }
