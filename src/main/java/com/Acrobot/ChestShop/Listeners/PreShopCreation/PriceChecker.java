@@ -27,6 +27,7 @@ public class PriceChecker implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public static void onPreShopCreation(PreShopCreationEvent event) {
+        ChestShopSign.Currency currency = ChestShopSign.getCurrency(event.getSignLines());
         BigDecimal price = ChestShopSign.parseMoney(event.getSignLine(PRICE_LINE));
 
         if (price.compareTo(PriceUtil.NO_PRICE) == 0) {
@@ -37,6 +38,6 @@ public class PriceChecker implements Listener {
         int scale = Math.min(Math.max(Properties.PRICE_PRECISION, 0), 2);
         price = price.setScale(scale, RoundingMode.HALF_UP);
 
-        event.setSignLine(PRICE_LINE, ChestShopSign.LINE_COLOR + ChestShopSign.formatPrice(price));
+        event.setSignLine(PRICE_LINE, ChestShopSign.PRICE_COLOR + ChestShopSign.formatPrice(price, currency));
     }
 }

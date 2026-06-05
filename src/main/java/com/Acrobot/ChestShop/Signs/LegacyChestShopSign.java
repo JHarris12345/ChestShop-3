@@ -6,6 +6,7 @@ import com.Acrobot.Breeze.Utils.StringUtil;
 import com.Acrobot.ChestShop.Configuration.Properties;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -143,6 +144,13 @@ public class LegacyChestShopSign {
             price = BigDecimal.ZERO;
         }
 
-        return ChestShopSign.buildSignLines(type, owner, amount, item, price);
+        // New shops always trade one item at a time, so convert the old
+        // "price for <amount> items" into a per-item price. Old shops were
+        // always money based.
+        if (amount > 1) {
+            price = price.divide(BigDecimal.valueOf(amount), Math.max(Properties.PRICE_PRECISION, 0), RoundingMode.HALF_UP);
+        }
+
+        return ChestShopSign.buildSignLines(type, owner, item, price, ChestShopSign.Currency.MONEY);
     }
 }

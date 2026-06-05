@@ -8,6 +8,7 @@ import com.Acrobot.ChestShop.Configuration.Properties;
 import com.Acrobot.ChestShop.Economy.Economy;
 import com.Acrobot.ChestShop.Events.Economy.CurrencyTransferEvent;
 import com.Acrobot.ChestShop.Events.TransactionEvent;
+import com.Acrobot.ChestShop.Signs.ChestShopSign;
 import com.Acrobot.ChestShop.Utils.ItemUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -70,8 +71,12 @@ public class TransactionMessageSender implements Listener {
         BigDecimal actualAmount = getTransactionActualAmount(event, messageTarget);
 
         Location loc = transactionEvent.getSign().getLocation();
+        ChestShopSign.Currency currency = ChestShopSign.getCurrency(transactionEvent.getSign());
+        String formattedPrice = currency == ChestShopSign.Currency.GC
+                ? ChestShopSign.formatPrice(actualAmount, currency)
+                : Economy.formatBalance(actualAmount);
         Map<String, String> replacementMap = new LinkedHashMap<>();
-        replacementMap.put("price", Economy.formatBalance(actualAmount));
+        replacementMap.put("price", formattedPrice);
         replacementMap.put("world", loc.getWorld().getName());
         replacementMap.put("x", String.valueOf(loc.getBlockX()));
         replacementMap.put("y", String.valueOf(loc.getBlockY()));

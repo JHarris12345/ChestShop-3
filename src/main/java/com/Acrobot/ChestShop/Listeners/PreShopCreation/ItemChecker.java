@@ -31,13 +31,6 @@ public class ItemChecker implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public static void onPreShopCreation(PreShopCreationEvent event) {
-        int amount;
-        try {
-            amount = ChestShopSign.getQuantity(event.getSignLines());
-        } catch (NumberFormatException invalidQuantity) {
-            return; // QuantityChecker reports the invalid amount
-        }
-
         String itemCode = ChestShopSign.getItem(event.getSignLines());
 
         ItemParseEvent parseEvent = new ItemParseEvent(itemCode);
@@ -57,7 +50,7 @@ public class ItemChecker implements Listener {
                 }
 
                 if (item == null) {
-                    event.setSignLine(QUANTITY_LINE, ChestShopSign.LINE_COLOR + amount + "x " + ChatColor.BOLD + AUTOFILL_CODE);
+                    event.setSignLine(QUANTITY_LINE, ChestShopSign.LINE_COLOR + "1x " + ChatColor.BOLD + AUTOFILL_CODE);
                     event.setOutcome(ITEM_AUTOFILL);
                     return;
                 }
@@ -69,11 +62,12 @@ public class ItemChecker implements Listener {
 
         itemCode = ItemUtil.getSignName(item);
 
-        if (StringUtil.getMinecraftStringWidth(amount + "x " + itemCode) > MAXIMUM_SIGN_WIDTH) {
+        // Shops always trade one item at a time, rendered as "1x <item>".
+        if (StringUtil.getMinecraftStringWidth("1x " + itemCode) > MAXIMUM_SIGN_WIDTH) {
             event.setOutcome(INVALID_ITEM);
             return;
         }
 
-        event.setSignLine(QUANTITY_LINE, ChestShopSign.LINE_COLOR + amount + "x " + itemCode);
+        event.setSignLine(QUANTITY_LINE, ChestShopSign.LINE_COLOR + "1x " + itemCode);
     }
 }

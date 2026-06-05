@@ -353,6 +353,7 @@ public class ChestShop extends JavaPlugin {
     }
 
     private void registerPostTransactionEvents() {
+        registerEvent(new com.Acrobot.ChestShop.Listeners.Economy.GiftcardsListener());
         registerEvent(new EconomicModule());
         registerEvent(new EmptyShopDeleter());
         registerEvent(new ItemManager());

@@ -33,7 +33,7 @@ public class PriceCheckerTest {
     public void testCurrencySymbolAndCommasAreStripped() {
         PreShopCreationEvent event = run("$5,400.34");
         assertFalse(event.isCancelled());
-        assertEquals(ChestShopSign.LINE_COLOR + "$5,400.34", event.getSignLine(ChestShopSign.PRICE_LINE));
+        assertEquals(ChestShopSign.PRICE_COLOR + "$5,400.34", event.getSignLine(ChestShopSign.PRICE_LINE));
         assertTrue(BigDecimal.valueOf(5400.34).compareTo(ChestShopSign.getExactPrice(event.getSignLines())) == 0);
     }
 
@@ -41,28 +41,38 @@ public class PriceCheckerTest {
     public void testPlainNumber() {
         PreShopCreationEvent event = run("5400.34");
         assertFalse(event.isCancelled());
-        assertEquals(ChestShopSign.LINE_COLOR + "$5,400.34", event.getSignLine(ChestShopSign.PRICE_LINE));
+        assertEquals(ChestShopSign.PRICE_COLOR + "$5,400.34", event.getSignLine(ChestShopSign.PRICE_LINE));
     }
 
     @Test
     public void testIntegerGetsTwoDecimals() {
         PreShopCreationEvent event = run("100");
         assertFalse(event.isCancelled());
-        assertEquals(ChestShopSign.LINE_COLOR + "$100.00", event.getSignLine(ChestShopSign.PRICE_LINE));
+        assertEquals(ChestShopSign.PRICE_COLOR + "$100.00", event.getSignLine(ChestShopSign.PRICE_LINE));
     }
 
     @Test
     public void testFreeIsZero() {
         PreShopCreationEvent event = run("0");
         assertFalse(event.isCancelled());
-        assertEquals(ChestShopSign.LINE_COLOR + "$0.00", event.getSignLine(ChestShopSign.PRICE_LINE));
+        assertEquals(ChestShopSign.PRICE_COLOR + "$0.00", event.getSignLine(ChestShopSign.PRICE_LINE));
     }
 
     @Test
     public void testRoundingHalfUp() {
         PreShopCreationEvent event = run("5.005");
         assertFalse(event.isCancelled());
-        assertEquals(ChestShopSign.LINE_COLOR + "$5.01", event.getSignLine(ChestShopSign.PRICE_LINE));
+        assertEquals(ChestShopSign.PRICE_COLOR + "$5.01", event.getSignLine(ChestShopSign.PRICE_LINE));
+    }
+
+    @Test
+    public void testGcCurrency() {
+        PreShopCreationEvent event = new PreShopCreationEvent(null, null,
+                new String[]{ChestShopSign.BUY_LABEL, "Owner", "1x stone", "640 GC"});
+        onPreShopCreation(event);
+        assertFalse(event.isCancelled());
+        assertEquals(ChestShopSign.PRICE_COLOR + "640.00 GC", event.getSignLine(ChestShopSign.PRICE_LINE));
+        assertTrue(BigDecimal.valueOf(640).compareTo(ChestShopSign.getExactPrice(event.getSignLines())) == 0);
     }
 
     @Test

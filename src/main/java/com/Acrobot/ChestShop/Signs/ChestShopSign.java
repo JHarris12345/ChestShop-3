@@ -61,15 +61,30 @@ public class ChestShopSign {
 
     /** Colour applied to the type label (&a&l). */
     public static final String LABEL_COLOR = ChatColor.GREEN.toString() + ChatColor.BOLD;
-    /** Colour applied to the other lines (&f). */
+    /** Colour applied to the owner and item lines (&f). */
     public static final String LINE_COLOR = ChatColor.WHITE.toString();
+    /** Colour applied to the price line (&a). */
+    public static final String PRICE_COLOR = ChatColor.GREEN.toString();
 
     public static final String BUY_LABEL = LABEL_COLOR + BUY_LABEL_TEXT;
     public static final String SELL_LABEL = LABEL_COLOR + SELL_LABEL_TEXT;
 
+    /** Suffix used to mark a giftcards (GC) price on a sign. */
+    public static final String GC_SUFFIX = "GC";
+
     private static final Pattern MERGED_ITEM_PATTERN = Pattern.compile("(?i)^\\s*([0-9]+)\\s*x\\s*(.*)$");
 
     private static final DecimalFormat PRICE_FORMAT = new DecimalFormat("#,##0.00", new DecimalFormatSymbols(Locale.US));
+
+    /**
+     * The currency a shop trades in.
+     */
+    public enum Currency {
+        /** The server economy (Vault), displayed as "$1,234.56". */
+        MONEY,
+        /** Giftcards (InsanityCore), displayed as "1,234.56 GC". */
+        GC
+    }
 
     /**
      * Direction of a shop. A single sign can only be one of these.
@@ -337,7 +352,16 @@ public class ChestShopSign {
     }
 
     /**
-     * Get the numeric price of a new-format shop sign.
+     * Get the numeric (per item) price of a new-format shop sign.
+     * @param sign The sign
+     * @return The price, or {@link PriceUtil#NO_PRICE} if it cannot be parsed
+     */
+    public static BigDecimal getExactPrice(Sign sign) {
+        return getExactPrice(sign.getLines());
+    }
+
+    /**
+     * Get the numeric (per item) price of a new-format shop sign.
      * @param lines The sign lines
      * @return The price, or {@link PriceUtil#NO_PRICE} if it cannot be parsed
      */
@@ -401,12 +425,51 @@ public class ChestShopSign {
     }
 
     /**
-     * Format a price for display on a sign, e.g. "$1,234.56".
+     * Format a money price for display, e.g. "$1,234.56".
      * @param value The value
      * @return The formatted price
      */
     public static String formatPrice(BigDecimal value) {
+        return formatPrice(value, Currency.MONEY);
+    }
+
+    /**
+     * Format a price for display in the given currency, e.g. "$1,234.56" or
+     * "1,234.56 GC".
+     * @param value The value
+     * @param currency The currency
+     * @return The formatted price
+     */
+    public static String formatPrice(BigDecimal value, Currency currency) {
+        if (currency == Currency.GC) {
+            return PRICE_FORMAT.format(value) + " " + GC_SUFFIX;
+        }
         return "$" + PRICE_FORMAT.format(value);
+    }
+
+    /**
+     * Get the currency a shop trades in.
+     * @param sign The sign
+     * @return The currency
+     */
+    public static Currency getCurrency(Sign sign) {
+        return getCurrency(sign.getLines());
+    }
+
+    /**
+     * Get the currency a shop trades in, based on its price line.
+     * @param lines The sign lines
+     * @return The currency
+     */
+    public static Currency getCurrency(String[] lines) {
+        if (lines.length <= PRICE_LINE || lines[PRICE_LINE] == null) {
+            return Currency.MONEY;
+        }
+        String priceLine = StringUtil.stripColourCodes(lines[PRICE_LINE]).toLowerCase(Locale.ROOT);
+        if (priceLine.contains("gc") || priceLine.contains("giftcard")) {
+            return Currency.GC;
+        }
+        return Currency.MONEY;
     }
 
     /**
@@ -417,21 +480,23 @@ public class ChestShopSign {
     }
 
     /**
-     * Build the four rendered lines for a shop sign.
+     * Build the four rendered lines for a shop sign. Shops always trade one
+     * item at a time ("1x &lt;item&gt;"); larger amounts are chosen at purchase
+     * time through the amount anvil.
      *
-     * @param type   The shop direction
-     * @param owner  The owner name
-     * @param amount The item amount
-     * @param item   The item sign code
-     * @param price  The price
+     * @param type     The shop direction
+     * @param owner    The owner name
+     * @param item     The item sign code
+     * @param price    The price (per item)
+     * @param currency The currency
      * @return The rendered (colour-coded) sign lines
      */
-    public static String[] buildSignLines(ShopType type, String owner, int amount, String item, BigDecimal price) {
+    public static String[] buildSignLines(ShopType type, String owner, String item, BigDecimal price, Currency currency) {
         return new String[]{
                 getLabel(type),
                 LINE_COLOR + owner,
-                LINE_COLOR + amount + "x " + item,
-                LINE_COLOR + formatPrice(price)
+                LINE_COLOR + "1x " + item,
+                PRICE_COLOR + formatPrice(price, currency)
         };
     }
 

@@ -82,22 +82,30 @@ public class ShopInfoListener implements Listener {
 
             ChestShop.callEvent(new ItemInfoEvent(event.getSender(), item));
 
+            ChestShopSign.Currency currency = ChestShopSign.getCurrency(event.getSign());
+
             if (!buyPrice.equals(PriceUtil.NO_PRICE)) {
-                CurrencyFormatEvent cfe = ChestShop.callEvent(new CurrencyFormatEvent(buyPrice));
                 Messages.shopinfo_buy.send(event.getSender(),
                         "amount", String.valueOf(amount),
-                        "price", cfe.getFormattedAmount()
+                        "price", formatPrice(buyPrice, currency)
                 );
             }
             if (!sellPrice.equals(PriceUtil.NO_PRICE)) {
-                CurrencyFormatEvent cfe = ChestShop.callEvent(new CurrencyFormatEvent(sellPrice));
                 Messages.shopinfo_sell.send(event.getSender(),
                         "amount", String.valueOf(amount),
-                        "price", cfe.getFormattedAmount()
+                        "price", formatPrice(sellPrice, currency)
                 );
             }
         } else {
             Messages.INVALID_SHOP_DETECTED.sendWithPrefix(event.getSender());
         }
+    }
+
+    private static String formatPrice(BigDecimal price, ChestShopSign.Currency currency) {
+        if (currency == ChestShopSign.Currency.GC) {
+            return ChestShopSign.formatPrice(price, currency);
+        }
+        CurrencyFormatEvent cfe = ChestShop.callEvent(new CurrencyFormatEvent(price));
+        return cfe.getFormattedAmount();
     }
 }

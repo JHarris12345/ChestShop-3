@@ -67,20 +67,29 @@ public class SignCreate implements Listener {
             return;
         }
 
-        // Translate the typed input into the new layout. The owner line is left empty
-        // for the NameChecker to fill, and the amount/item are merged onto one line.
-        String amountInput = orEmpty(StringUtil.strip(typed[1]));
+        // Translate the typed input into the rendered layout. The player types:
+        //   line 1: buy/sell      line 2: item      line 3: price      line 4: currency ($/gc)
+        // The owner line is filled in by NameChecker, the item is rendered as "1x <item>"
+        // and the price + currency are combined onto the price line.
+        String itemInput = orEmpty(StringUtil.strip(typed[1]));
         String priceInput = orEmpty(StringUtil.strip(typed[2]));
-        String itemInput = orEmpty(StringUtil.strip(typed[3]));
+        String currencyInput = orEmpty(StringUtil.strip(typed[3]));
         if (itemInput.isEmpty()) {
             itemInput = ChestShopSign.AUTOFILL_CODE;
+        }
+
+        // Mark the price line with a GC suffix so the rest of the pipeline knows the currency.
+        String priceLine = priceInput;
+        String currencyLower = currencyInput.toLowerCase(java.util.Locale.ROOT);
+        if (currencyLower.equals("gc") || currencyLower.startsWith("giftcard")) {
+            priceLine = priceInput + " " + ChestShopSign.GC_SUFFIX;
         }
 
         String[] lines = new String[]{
                 ChestShopSign.getLabel(type),
                 "",
-                ChestShopSign.LINE_COLOR + amountInput + "x " + itemInput,
-                ChestShopSign.LINE_COLOR + priceInput
+                ChestShopSign.LINE_COLOR + "1x " + itemInput,
+                priceLine
         };
 
         PreShopCreationEvent preEvent = new PreShopCreationEvent(event.getPlayer(), sign, lines);
