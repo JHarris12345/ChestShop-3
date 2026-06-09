@@ -146,11 +146,18 @@ public class LegacyChestShopSign {
 
         // New shops always trade one item at a time, so convert the old
         // "price for <amount> items" into a per-item price. Old shops were
-        // always money based.
-        if (amount > 1) {
-            price = price.divide(BigDecimal.valueOf(amount), Math.max(Properties.PRICE_PRECISION, 0), RoundingMode.HALF_UP);
+        // always money based. The sign only shows 2 decimals, so round to that
+        // and refuse to convert a paid shop whose per-item price would round
+        // below the $0.01 minimum (it would otherwise silently become free).
+        int scale = Math.min(Math.max(Properties.PRICE_PRECISION, 0), 2);
+        BigDecimal perItem = (amount > 1)
+                ? price.divide(BigDecimal.valueOf(amount), scale, RoundingMode.HALF_UP)
+                : price.setScale(scale, RoundingMode.HALF_UP);
+
+        if (price.signum() > 0 && perItem.signum() == 0) {
+            return null;
         }
 
-        return ChestShopSign.buildSignLines(type, owner, item, price, ChestShopSign.Currency.MONEY);
+        return ChestShopSign.buildSignLines(type, owner, item, perItem, ChestShopSign.Currency.MONEY);
     }
 }

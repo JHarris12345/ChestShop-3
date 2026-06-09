@@ -106,9 +106,22 @@ public class PlayerInteract implements Listener {
             return;
         }
 
-        // Lazily migrate old-format shops the first time they are interacted with.
-        if (ChestShopSign.convertIfLegacy(sign)) {
-            sign = (Sign) getState(block, false);
+        // Old-format shops must be converted by their owner before they can be
+        // used - there is no automatic conversion.
+        if (!ChestShopSign.isNewFormat(StringUtil.stripColourCodes(sign.getLines()))) {
+            event.setCancelled(true);
+            if (ChestShopSign.isOwner(player, sign)) {
+                if (ChestShopSign.convertIfLegacy(sign)) {
+                    player.sendMessage(ChatColor.GREEN + "Your shop has been updated to the new format.");
+                } else {
+                    player.sendMessage(ChatColor.RED + "This shop couldn't be updated automatically (its per-item price would round below $0.01). Please break and remake it.");
+                }
+            } else if (action == RIGHT_CLICK_BLOCK) {
+                ChestShop.callEvent(new ShopInfoEvent(player, sign));
+            } else {
+                player.sendMessage(ChatColor.RED + "This shop still uses the old format and must be updated by its owner before you can use it.");
+            }
+            return;
         }
 
         if (Properties.ALLOW_AUTO_ITEM_FILL && ChatColor.stripColor(ChestShopSign.getItem(sign)).equals(AUTOFILL_CODE)) {

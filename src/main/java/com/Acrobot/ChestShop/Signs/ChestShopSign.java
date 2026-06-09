@@ -525,7 +525,9 @@ public class ChestShopSign {
      * @return The currency
      */
     public static Currency getCurrency(String[] lines) {
-        if (lines.length <= PRICE_LINE || lines[PRICE_LINE] == null) {
+        // Old-format shops are always money based (and their price line index
+        // holds the item, so it must not be inspected here).
+        if (!isNewFormat(lines) || lines.length <= PRICE_LINE || lines[PRICE_LINE] == null) {
             return Currency.MONEY;
         }
         String priceLine = StringUtil.stripColourCodes(lines[PRICE_LINE]).toLowerCase(Locale.ROOT);

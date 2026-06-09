@@ -9,7 +9,6 @@ import com.Acrobot.ChestShop.Listeners.Block.BlockPlace;
 import com.Acrobot.ChestShop.Listeners.Block.Break.ChestBreak;
 import com.Acrobot.ChestShop.Listeners.Block.Break.SignBreak;
 import com.Acrobot.ChestShop.Listeners.Block.SignCreate;
-import com.Acrobot.ChestShop.Listeners.Block.ShopConverter;
 import com.Acrobot.ChestShop.Listeners.Economy.GiftcardsListener;
 import com.Acrobot.ChestShop.Listeners.Economy.ServerAccountCorrector;
 import com.Acrobot.ChestShop.Listeners.Economy.TaxModule;
@@ -286,7 +285,6 @@ public class ChestShop extends JavaPlugin {
 
         registerEvent(new SignBreak());
         registerEvent(new SignCreate());
-        registerEvent(new ShopConverter());
         registerEvent(new ChestBreak());
 
         registerEvent(new BlockPlace());
