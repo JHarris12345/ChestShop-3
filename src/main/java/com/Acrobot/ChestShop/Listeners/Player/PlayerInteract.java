@@ -127,8 +127,11 @@ public class PlayerInteract implements Listener {
         // Right-clicking any shop always shows its info in chat, regardless of who
         // owns it or the ALLOW_SIGN_CHEST_OPEN setting.
         if (action == RIGHT_CLICK_BLOCK) {
-            // Allow using ink sacks on chest shop signs
-            if (event.hasItem() && (event.getItem().getType() == Material.INK_SAC || event.getItem().getType() == Material.GLOW_INK_SAC)) return;
+            // Allow using ink sacks & dyes on chest shop signs
+            if (event.hasItem() && (
+                    event.getItem().getType() == Material.INK_SAC ||
+                            event.getItem().getType() == Material.GLOW_INK_SAC ||
+                            event.getItem().getType().toString().endsWith("_DYE"))) return;
 
             event.setCancelled(true);
             ChestShop.callEvent(new ShopInfoEvent(player, sign));
