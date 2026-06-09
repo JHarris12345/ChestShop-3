@@ -176,11 +176,12 @@ public class PlayerInteract implements Listener {
                     showChestGUI(player, block, sign);
                     return;
                 }
-                // don't allow owners or people with access to buy/sell at this shop
-                Messages.TRADE_DENIED_ACCESS_PERMS.sendWithPrefix(player);
+                // owners/people with access can't trade here; right-click shows the shop info instead
                 if (action == RIGHT_CLICK_BLOCK) {
-                    // don't allow editing
                     event.setCancelled(true);
+                    ChestShop.callEvent(new ShopInfoEvent(player, sign));
+                } else {
+                    Messages.TRADE_DENIED_ACCESS_PERMS.sendWithPrefix(player);
                 }
                 return;
             }
