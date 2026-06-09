@@ -24,6 +24,7 @@ import com.Acrobot.ChestShop.Utils.uBlock;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.block.Sign;
@@ -126,6 +127,9 @@ public class PlayerInteract implements Listener {
         // Right-clicking any shop always shows its info in chat, regardless of who
         // owns it or the ALLOW_SIGN_CHEST_OPEN setting.
         if (action == RIGHT_CLICK_BLOCK) {
+            // Allow using ink sacks on chest shop signs
+            if (event.hasItem() && (event.getItem().getType() == Material.INK_SAC || event.getItem().getType() == Material.GLOW_INK_SAC)) return;
+
             event.setCancelled(true);
             ChestShop.callEvent(new ShopInfoEvent(player, sign));
             return;
