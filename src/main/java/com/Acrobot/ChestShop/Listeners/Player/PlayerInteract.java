@@ -116,10 +116,8 @@ public class PlayerInteract implements Listener {
                 } else {
                     player.sendMessage(ChatColor.RED + "This shop couldn't be updated automatically (its per-item price would round below $0.01). Please break and remake it.");
                 }
-            } else if (action == RIGHT_CLICK_BLOCK) {
-                ChestShop.callEvent(new ShopInfoEvent(player, sign));
             } else {
-                player.sendMessage(ChatColor.RED + "This shop still uses the old format and must be updated by its owner before you can use it.");
+                player.sendMessage(ChatColor.RED + "This shop is out of action as the owner has not updated it to the new format. Contact them");
             }
             return;
         }
