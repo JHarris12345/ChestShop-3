@@ -123,6 +123,14 @@ public class PlayerInteract implements Listener {
             return;
         }
 
+        // Right-clicking any shop always shows its info in chat, regardless of who
+        // owns it or the ALLOW_SIGN_CHEST_OPEN setting.
+        if (action == RIGHT_CLICK_BLOCK) {
+            event.setCancelled(true);
+            ChestShop.callEvent(new ShopInfoEvent(player, sign));
+            return;
+        }
+
         if (Properties.ALLOW_AUTO_ITEM_FILL && ChatColor.stripColor(ChestShopSign.getItem(sign)).equals(AUTOFILL_CODE)) {
             if (ChestShopSign.hasPermission(player, OTHER_NAME_CREATE, sign)) {
                 ItemStack item = player.getInventory().getItemInMainHand();
@@ -187,14 +195,7 @@ public class PlayerInteract implements Listener {
             }
         }
 
-        // Right-click shows shop information in chat
-        if (action == RIGHT_CLICK_BLOCK) {
-            event.setCancelled(true);
-            ChestShop.callEvent(new ShopInfoEvent(player, sign));
-            return;
-        }
-
-        // Anything that is not a left-click is not a trade
+        // Anything that is not a left-click is not a trade (right-click is handled above)
         if (action != LEFT_CLICK_BLOCK) {
             return;
         }
