@@ -6,7 +6,6 @@ import com.Acrobot.ChestShop.ChestShop;
 import com.Acrobot.ChestShop.Configuration.Messages;
 import com.Acrobot.ChestShop.Events.PreShopCreationEvent;
 import com.Acrobot.ChestShop.Events.ShopCreatedEvent;
-import com.Acrobot.ChestShop.Listeners.Block.Break.SignBreak;
 import com.Acrobot.ChestShop.Signs.ChestShopSign;
 import com.Acrobot.ChestShop.Utils.uBlock;
 import org.bukkit.GameMode;
@@ -55,15 +54,19 @@ public class SignCreate implements Listener {
             return;
         }
 
+        // Shops can be made but never edited. If this sign is already a shop, cancel
+        // the change and revert it - a shop must be broken and remade to change it.
+        if (ChestShopSign.isValid(sign)) {
+            event.setCancelled(true);
+            sign.update();
+            return;
+        }
+
         String[] typed = StringUtil.stripColourCodes(event.getLines());
 
         // The first line decides the shop direction. Anything else is not a shop creation attempt.
         ChestShopSign.ShopType type = parseType(typed[ChestShopSign.TYPE_LINE]);
         if (type == null) {
-            // The player may have edited a previously valid shop into something else
-            if (ChestShopSign.isValid(sign)) {
-                SignBreak.sendShopDestroyedEvent(sign, event.getPlayer());
-            }
             return;
         }
 
