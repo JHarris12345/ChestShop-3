@@ -37,6 +37,12 @@ public class StockCounterModule implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public static void onPreShopCreation(PreShopCreationEvent event) {
+        // The stock counter shares the quantity line, which the new sign layout uses
+        // for the item. It is therefore not supported on new-format signs.
+        if (ChestShopSign.isNewFormat(event.getSignLines())) {
+            return;
+        }
+
         int quantity;
         try {
             quantity = ChestShopSign.getQuantity(event.getSignLines());
@@ -133,6 +139,10 @@ public class StockCounterModule implements Listener {
      * @param extraItems         The extra items to add in the search
      */
     public static void updateCounterOnQuantityLine(Sign sign, Inventory chestShopInventory, ItemStack... extraItems) {
+        if (sign == null || ChestShopSign.isNewFormat(sign.getLines())) {
+            return;
+        }
+
         ItemStack itemTradedByShop = determineItemTradedByShop(sign);
         if (itemTradedByShop == null) {
             return;
@@ -167,6 +177,10 @@ public class StockCounterModule implements Listener {
     }
 
     public static void removeCounterFromQuantityLine(Sign sign) {
+        if (sign == null || ChestShopSign.isNewFormat(sign.getLines())) {
+            return;
+        }
+
         int quantity;
         try {
             quantity = ChestShopSign.getQuantity(sign);

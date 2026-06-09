@@ -4,7 +4,7 @@ version: '1.0'
 author: Acrobot
 authors: ['https://github.com/ChestShop-authors/ChestShop-3/contributors']
 description: A chest shop for economy plugins.
-softdepend: [Vault, Reserve, LWC, Lockette, LockettePro, Deadbolt, BlockLocker, OddItem, WorldGuard, GriefPrevention, RedProtect, Heroes, SimpleChestLock, Residence, ShowItem, ItemBridge]
+softdepend: [Vault, Reserve, LWC, Lockette, LockettePro, Deadbolt, BlockLocker, OddItem, WorldGuard, GriefPrevention, RedProtect, Heroes, SimpleChestLock, Residence, ShowItem, ItemBridge, PlaceholderAPI, InsanityCore]
 api-version: '1.13'
 folia-supported: true
 
@@ -46,6 +46,10 @@ commands:
   csglobalstats:
     description: View global chestshop stats
     permission: chestshop.globalstats
+    usage: /<command>
+  csconvert:
+    description: Convert old-format shop signs in loaded chunks to the new format
+    permission: chestshop.admin
     usage: /<command>
 
 permissions:

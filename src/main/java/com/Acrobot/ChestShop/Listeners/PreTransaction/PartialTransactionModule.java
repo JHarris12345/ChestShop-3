@@ -9,6 +9,7 @@ import com.Acrobot.ChestShop.Events.Economy.CurrencyAmountEvent;
 import com.Acrobot.ChestShop.Events.Economy.CurrencyCheckEvent;
 import com.Acrobot.ChestShop.Events.Economy.CurrencyHoldEvent;
 import com.Acrobot.ChestShop.Events.PreTransactionEvent;
+import com.Acrobot.ChestShop.Signs.ChestShopSign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -36,6 +37,13 @@ public class PartialTransactionModule implements Listener {
     @EventHandler(priority = EventPriority.LOW)
     public static void onPreBuyTransaction(PreTransactionEvent event) {
         if (event.isCancelled() || event.getTransactionType() != BUY) {
+            return;
+        }
+
+        // Partial transactions are money (Vault) based. GC shops use a plain
+        // full-amount check instead.
+        if (ChestShopSign.getCurrency(event.getSign()) == ChestShopSign.Currency.GC) {
+            AmountAndPriceChecker.onBuyItemCheck(event);
             return;
         }
 
@@ -124,6 +132,13 @@ public class PartialTransactionModule implements Listener {
     @EventHandler(priority = EventPriority.LOW)
     public static void onPreSellTransaction(PreTransactionEvent event) {
         if (event.isCancelled() || event.getTransactionType() != SELL) {
+            return;
+        }
+
+        // Partial transactions are money (Vault) based. GC shops use a plain
+        // full-amount check instead.
+        if (ChestShopSign.getCurrency(event.getSign()) == ChestShopSign.Currency.GC) {
+            AmountAndPriceChecker.onSellItemCheck(event);
             return;
         }
 

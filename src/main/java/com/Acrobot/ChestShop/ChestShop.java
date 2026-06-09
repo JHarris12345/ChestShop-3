@@ -9,6 +9,7 @@ import com.Acrobot.ChestShop.Listeners.Block.BlockPlace;
 import com.Acrobot.ChestShop.Listeners.Block.Break.ChestBreak;
 import com.Acrobot.ChestShop.Listeners.Block.Break.SignBreak;
 import com.Acrobot.ChestShop.Listeners.Block.SignCreate;
+import com.Acrobot.ChestShop.Listeners.Economy.GiftcardsListener;
 import com.Acrobot.ChestShop.Listeners.Economy.ServerAccountCorrector;
 import com.Acrobot.ChestShop.Listeners.Economy.TaxModule;
 import com.Acrobot.ChestShop.Listeners.GarbageTextListener;
@@ -129,6 +130,7 @@ public class ChestShop extends JavaPlugin {
         registerCommand("csstats", new Stats(), Permission.STATS);
         registerCommand("csstatsother", new StatsOther(), Permission.STATS_OTHER);
         registerCommand("csglobalstats", new GlobalStats(), Permission.GLOBAL_STATS);
+        registerCommand("csconvert", new Convert(), Permission.ADMIN);
 
         loadConfig();
 
@@ -350,6 +352,7 @@ public class ChestShop extends JavaPlugin {
     }
 
     private void registerPostTransactionEvents() {
+        registerEvent(new GiftcardsListener());
         registerEvent(new EconomicModule());
         registerEvent(new EmptyShopDeleter());
         registerEvent(new ItemManager());

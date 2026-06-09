@@ -8,78 +8,38 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
-import java.util.Locale;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
-import static com.Acrobot.Breeze.Utils.PriceUtil.isPrice;
 import static com.Acrobot.ChestShop.Events.PreShopCreationEvent.CreationOutcome.INVALID_PRICE;
 import static com.Acrobot.ChestShop.Signs.ChestShopSign.PRICE_LINE;
 
 /**
+ * Validates and normalises the price line into the "$1,234.56" display format.
+ *
+ * The player may type the price in a number of ways - with or without a
+ * currency symbol and with thousands separators (e.g. "$5,400.34" or
+ * "5400.34"); everything but the digits and the decimal point is ignored.
+ *
  * @author Acrobot
  */
 public class PriceChecker implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public static void onPreShopCreation(PreShopCreationEvent event) {
-        String line = ChestShopSign.getPrice(event.getSignLines()).toUpperCase(Locale.ROOT);
-        if (Properties.PRICE_PRECISION <= 0) {
-            line = line.replaceAll("\\.\\d*", ""); //remove too many decimal places
-        } else {
-            line = line.replaceAll("(\\.\\d{0," + Properties.PRICE_PRECISION + "})\\d*", "$1"); //remove too many decimal places
-        }
-        line = line.replaceAll("(\\.\\d*[1-9])0+", "$1"); //remove trailing zeroes
-        line = line.replaceAll("(\\d)\\.0+(\\D|$)", "$1$2"); //remove point and zeroes from strings that only have trailing zeros
+        ChestShopSign.Currency currency = ChestShopSign.getCurrency(event.getSignLines());
+        BigDecimal price = ChestShopSign.parseMoney(event.getSignLine(PRICE_LINE));
 
-        String[] part = line.split(":");
-
-        if (part.length > 1 && (isInvalid(part[0]) ^ isInvalid(part[1]))) {
-            line = line.replace(':', ' ');
-            part = new String[]{line};
-        }
-
-        if (part[0].split(" ").length > 2) {
+        if (price.compareTo(PriceUtil.NO_PRICE) == 0) {
             event.setOutcome(INVALID_PRICE);
             return;
         }
 
-        if (line.indexOf('B') != line.lastIndexOf('B') || line.indexOf('S') != line.lastIndexOf('S')) {
-            event.setOutcome(INVALID_PRICE);
-            return;
-        }
+        int scale = Math.min(Math.max(Properties.PRICE_PRECISION, 0), 2);
+        price = price.setScale(scale, RoundingMode.HALF_UP);
 
-        if (isPrice(part[0])) {
-            line = "B " + line;
-        }
-
-        if (part.length > 1 && isPrice(part[1])) {
-            line += " S";
-        }
-
-        if (line.length() > 15) {
-            line = line.replace(" ", "");
-        }
-
-        if (line.length() > 15) {
-            event.setOutcome(INVALID_PRICE);
-            return;
-        }
-
-        event.setSignLine(PRICE_LINE, line);
-
-        if (!PriceUtil.hasBuyPrice(line) && !PriceUtil.hasSellPrice(line)) {
-            event.setOutcome(INVALID_PRICE);
-        }
-    }
-
-    private static boolean isInvalid(String part) {
-        char characters[] = {'B', 'S'};
-
-        for (char character : characters) {
-            if (part.contains(Character.toString(character))) {
-                return !PriceUtil.hasPrice(part, character);
-            }
-        }
-
-        return false;
+        ChestShopSign.ShopType type = ChestShopSign.getShopType(event.getSignLines());
+        String color = type == null ? ChestShopSign.BUY_COLOR : ChestShopSign.getColor(type);
+        event.setSignLine(PRICE_LINE, color + ChestShopSign.formatPrice(price, currency) + " each");
     }
 }

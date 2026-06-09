@@ -150,7 +150,9 @@ public class Stats implements TabExecutor {
 
     public static List<String> getStats(String username, long hours) {
         List<String> result = new ArrayList<>();
-        LinkedHashMap<String, Double> chestshops = new LinkedHashMap<>(); // A map of the coords of every chest shop that had action and how much it earned the player (includes negative values for ones that lost the player money)
+        // A map of the coords of every chest shop that had action and how much it earned the player,
+        // split per currency as [money, gc] (includes negative values for ones that lost the player money)
+        LinkedHashMap<String, double[]> chestshops = new LinkedHashMap<>();
 
         File[] files = new File(plugin.getDataFolder(), "logs").listFiles();
         String lowercaseName = username.toLowerCase();
@@ -211,9 +213,17 @@ public class Stats implements TabExecutor {
                         location = "[" + location; // Add back the leading [ we removed for the split above (we included it in the split to make it a more accurate split)
                         if (location.contains(" (")) location = location.split(" \\(")[0]; // Remove the tax section if it is there
 
-                        double price = Double.parseDouble(line.split(" for ")[1].split(" ")[0]);
+                        String[] forTokens = line.split(" for ")[1].split(" ");
+                        double price = Double.parseDouble(forTokens[0].replace(",", ""));
+                        boolean isGc = forTokens.length > 1 && forTokens[1].equalsIgnoreCase("GC");
 
-                        chestshops.put(location, chestshops.getOrDefault(location, 0d) + ((earnedMoney) ? price : (0 - price)));
+                        double signed = earnedMoney ? price : (0 - price);
+                        double[] totals = chestshops.computeIfAbsent(location, k -> new double[2]);
+                        if (isGc) {
+                            totals[1] += signed;
+                        } else {
+                            totals[0] += signed;
+                        }
 
                     } catch (Exception ex) {
                         plugin.getLogger().info("Error whilst calculating line");
@@ -230,7 +240,9 @@ public class Stats implements TabExecutor {
         }
 
         chestshops = chestshops.entrySet().stream()
-                .sorted((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()))  // Sort by value descending
+                .sorted((entry1, entry2) -> Double.compare(
+                        entry2.getValue()[0] + entry2.getValue()[1],
+                        entry1.getValue()[0] + entry1.getValue()[1]))  // Sort by combined value descending
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
@@ -238,12 +250,20 @@ public class Stats implements TabExecutor {
                         LinkedHashMap::new  // To maintain insertion order after sorting
                 ));
 
-        for (Map.Entry<String, Double> entry : chestshops.entrySet()) {
+        for (Map.Entry<String, double[]> entry : chestshops.entrySet()) {
             String location = entry.getKey();
-            double value = entry.getValue();
+            double money = entry.getValue()[0];
+            double gc = entry.getValue()[1];
 
-            // We need to manually remove the - sign else it gets put after the $ (like $-25) so we just do that formatting ourselves
-            result.add(Utils.colour("&f" + location + " " + ((value < 0) ? "&c-" : "&a") + "$" + ((value < 0) ? df.format((0 - value)) : df.format(value))));
+            // Show each currency separately. We manually handle the - sign so it doesn't end up after the $ (like $-25)
+            StringBuilder sb = new StringBuilder("&f" + location);
+            if (money != 0) {
+                sb.append(" ").append(money < 0 ? "&c-$" : "&a$").append(df.format(Math.abs(money)));
+            }
+            if (gc != 0) {
+                sb.append(" ").append(gc < 0 ? "&c-" : "&a").append(df.format(Math.abs(gc))).append(" GC");
+            }
+            result.add(Utils.colour(sb.toString()));
         }
 
         return result;

@@ -8,7 +8,6 @@ import com.Acrobot.ChestShop.Events.PreShopCreationEvent;
 import com.Acrobot.ChestShop.Events.ShopCreatedEvent;
 import com.Acrobot.ChestShop.Listeners.Block.Break.SignBreak;
 import com.Acrobot.ChestShop.Signs.ChestShopSign;
-import com.Acrobot.ChestShop.UUIDs.NameManager;
 import com.Acrobot.ChestShop.Utils.uBlock;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -20,9 +19,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Map;
-
-import static com.Acrobot.ChestShop.Permission.OTHER_NAME_DESTROY;
+import java.util.Locale;
 
 /**
  * @author Acrobot
@@ -58,22 +55,42 @@ public class SignCreate implements Listener {
             return;
         }
 
-        if (ChestShopSign.isValid(event.getLines()) && !NameManager.canUseName(event.getPlayer(), OTHER_NAME_DESTROY, ChestShopSign.getOwner(event.getLines()))) {
-            event.setCancelled(true);
-            sign.update();
-            ChestShop.logDebug("Shop sign creation at " + sign.getLocation() + " by " + event.getPlayer().getName() + " was cancelled as they weren't able to create a shop for the account '" + ChestShopSign.getOwner(event.getLines()) + "'");
-            return;
-        }
+        String[] typed = StringUtil.stripColourCodes(event.getLines());
 
-        String[] lines = StringUtil.stripColourCodes(event.getLines());
-
-        if (!ChestShopSign.isValidPreparedSign(lines)) {
-            // Check if a valid shop already existed previously
+        // The first line decides the shop direction. Anything else is not a shop creation attempt.
+        ChestShopSign.ShopType type = parseType(typed[ChestShopSign.TYPE_LINE]);
+        if (type == null) {
+            // The player may have edited a previously valid shop into something else
             if (ChestShopSign.isValid(sign)) {
                 SignBreak.sendShopDestroyedEvent(sign, event.getPlayer());
             }
             return;
         }
+
+        // Translate the typed input into the rendered layout. The player types:
+        //   line 1: buy/sell      line 2: item      line 3: price      line 4: currency ($/gc)
+        // The owner line is filled in by NameChecker, the item is rendered as "1x <item>"
+        // and the price + currency are combined onto the price line.
+        String itemInput = orEmpty(StringUtil.strip(typed[1]));
+        String priceInput = orEmpty(StringUtil.strip(typed[2]));
+        String currencyInput = orEmpty(StringUtil.strip(typed[3]));
+        if (itemInput.isEmpty()) {
+            itemInput = ChestShopSign.AUTOFILL_CODE;
+        }
+
+        // Mark the price line with a GC suffix so the rest of the pipeline knows the currency.
+        String priceLine = priceInput;
+        String currencyLower = currencyInput.toLowerCase(Locale.ROOT);
+        if (currencyLower.equals("gc") || currencyLower.startsWith("giftcard")) {
+            priceLine = priceInput + " " + ChestShopSign.GC_SUFFIX;
+        }
+
+        String[] lines = new String[]{
+                ChestShopSign.getLabel(type),
+                "",
+                ChestShopSign.LINE_COLOR + itemInput,
+                priceLine
+        };
 
         PreShopCreationEvent preEvent = new PreShopCreationEvent(event.getPlayer(), sign, lines);
         ChestShop.callEvent(preEvent);
@@ -103,5 +120,23 @@ public class SignCreate implements Listener {
 
         ShopCreatedEvent postEvent = new ShopCreatedEvent(preEvent.getPlayer(), preEvent.getSign(), uBlock.findConnectedContainer(preEvent.getSign()), preEvent.getSignLines(), preEvent.getOwnerAccount());
         ChestShop.callEvent(postEvent);
+    }
+
+    private static String orEmpty(String value) {
+        return value == null ? "" : value;
+    }
+
+    private static ChestShopSign.ShopType parseType(String line) {
+        if (line == null) {
+            return null;
+        }
+        String typeName = StringUtil.strip(line).toLowerCase(Locale.ROOT);
+        if (typeName.equals("buy")) {
+            return ChestShopSign.ShopType.BUY;
+        }
+        if (typeName.equals("sell")) {
+            return ChestShopSign.ShopType.SELL;
+        }
+        return null;
     }
 }
