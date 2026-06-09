@@ -67,6 +67,19 @@ public class SignCreate implements Listener {
         // The first line decides the shop direction. Anything else is not a shop creation attempt.
         ChestShopSign.ShopType type = parseType(typed[ChestShopSign.TYPE_LINE]);
         if (type == null) {
+            if (ChestShopSign.isValid(event.getLines())) {
+                // The edit keeps (or turns) this into a shop sign without going through
+                // creation. Block it so players can't change the owner to someone else,
+                // bypass the creation checks, or farm refunds - a shop must be broken and
+                // remade to change it.
+                event.setCancelled(true);
+                sign.update();
+                return;
+            }
+            if (ChestShopSign.isValid(sign)) {
+                // A previously valid shop was edited into a non-shop -> treat as removal
+                SignBreak.sendShopDestroyedEvent(sign, event.getPlayer());
+            }
             return;
         }
 
@@ -84,7 +97,7 @@ public class SignCreate implements Listener {
         // Mark the price line with a GC suffix so the rest of the pipeline knows the currency.
         String priceLine = priceInput;
         String currencyLower = currencyInput.toLowerCase(Locale.ROOT);
-        if (currencyLower.equals("gc") || currencyLower.startsWith("giftcard")) {
+        if (currencyLower.equals("gc") || currencyLower.startsWith("giftcard") || currencyLower.startsWith("giftcards")) {
             priceLine = priceInput + " " + ChestShopSign.GC_SUFFIX;
         }
 

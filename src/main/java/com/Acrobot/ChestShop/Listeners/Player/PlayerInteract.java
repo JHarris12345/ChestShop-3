@@ -19,6 +19,7 @@ import com.Acrobot.ChestShop.Permission;
 import com.Acrobot.ChestShop.Security;
 import com.Acrobot.ChestShop.Signs.ChestShopSign;
 import com.Acrobot.ChestShop.Utils.ItemUtil;
+import com.Acrobot.ChestShop.Utils.Utils;
 import com.Acrobot.ChestShop.Utils.uBlock;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -183,11 +184,12 @@ public class PlayerInteract implements Listener {
                     showChestGUI(player, block, sign);
                     return;
                 }
-                // don't allow owners or people with access to buy/sell at this shop
-                Messages.TRADE_DENIED_ACCESS_PERMS.sendWithPrefix(player);
+                // owners/people with access can't trade here; right-click shows the shop info instead
                 if (action == RIGHT_CLICK_BLOCK) {
-                    // don't allow editing
                     event.setCancelled(true);
+                    ChestShop.callEvent(new ShopInfoEvent(player, sign));
+                } else {
+                    Messages.TRADE_DENIED_ACCESS_PERMS.sendWithPrefix(player);
                 }
                 return;
             }
@@ -330,7 +332,7 @@ public class PlayerInteract implements Listener {
         if (streak >= STREAK_THRESHOLD && now - LAST_HINT_TIME.getOrDefault(id, 0L) >= HINT_COOLDOWN_MS) {
             LAST_HINT_TIME.put(id, now);
             TRADE_STREAK.put(id, 0);
-            player.sendMessage(ChatColor.YELLOW + "Tip: " + ChatColor.GOLD + "shift-left-click" + ChatColor.YELLOW + " the shop to buy or sell a custom amount at once.");
+            player.sendMessage(Utils.colour("&b&lTIP: &fShift-click the shop to buy or sell a custom amount"));
         }
     }
 
