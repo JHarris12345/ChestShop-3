@@ -13,6 +13,7 @@ import com.Acrobot.ChestShop.Events.ItemParseEvent;
 import com.Acrobot.ChestShop.Events.ShopInfoEvent;
 import com.Acrobot.ChestShop.Signs.ChestShopSign;
 import com.Acrobot.ChestShop.Utils.ItemUtil;
+import com.Acrobot.ChestShop.Utils.Utils;
 import com.Acrobot.ChestShop.Utils.uBlock;
 import com.google.common.collect.ImmutableMap;
 import org.bukkit.block.Container;
@@ -73,9 +74,9 @@ public class ShopInfoListener implements Listener {
                     "prices", pricesLine,
                     "quantity", String.valueOf(amount)
             );
-            if (!Properties.SHOWITEM_MESSAGE) {
+            /*if (!Properties.SHOWITEM_MESSAGE) {
                 Messages.shopinfo.send(event.getSender(), replacementMap);
-            }
+            }*/
 
             BigDecimal buyPrice = PriceUtil.getExactBuyPrice(pricesLine);
             BigDecimal sellPrice = PriceUtil.getExactSellPrice(pricesLine);
@@ -83,19 +84,15 @@ public class ShopInfoListener implements Listener {
             ChestShop.callEvent(new ItemInfoEvent(event.getSender(), item));
 
             ChestShopSign.Currency currency = ChestShopSign.getCurrency(event.getSign());
+            boolean buy = !buyPrice.equals(PriceUtil.NO_PRICE);
 
-            if (!buyPrice.equals(PriceUtil.NO_PRICE)) {
-                Messages.shopinfo_buy.send(event.getSender(),
-                        "amount", String.valueOf(amount),
-                        "price", formatPrice(buyPrice, currency)
-                );
-            }
-            if (!sellPrice.equals(PriceUtil.NO_PRICE)) {
-                Messages.shopinfo_sell.send(event.getSender(),
-                        "amount", String.valueOf(amount),
-                        "price", formatPrice(sellPrice, currency)
-                );
-            }
+            String action = (buy) ? "Buy" : "Sell";
+
+            event.getSender().sendMessage(Utils.colour("&a&m==============&a[ Shop Info ]&m=============="));
+            event.getSender().sendMessage(Utils.colour("&a" + action + ": &f" + amount + "x " + replacementMap.get("item") + " for " + formatPrice(((buy) ? buyPrice : sellPrice), currency)));
+            event.getSender().sendMessage(Utils.colour("&aStock: &f" + replacementMap.get("stock")));
+            event.getSender().sendMessage(Utils.colour("&a&m======================================="));
+
         } else {
             Messages.INVALID_SHOP_DETECTED.sendWithPrefix(event.getSender());
         }

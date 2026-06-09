@@ -19,6 +19,7 @@ import com.Acrobot.ChestShop.Permission;
 import com.Acrobot.ChestShop.Security;
 import com.Acrobot.ChestShop.Signs.ChestShopSign;
 import com.Acrobot.ChestShop.Utils.ItemUtil;
+import com.Acrobot.ChestShop.Utils.Utils;
 import com.Acrobot.ChestShop.Utils.uBlock;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -329,7 +330,7 @@ public class PlayerInteract implements Listener {
         if (streak >= STREAK_THRESHOLD && now - LAST_HINT_TIME.getOrDefault(id, 0L) >= HINT_COOLDOWN_MS) {
             LAST_HINT_TIME.put(id, now);
             TRADE_STREAK.put(id, 0);
-            player.sendMessage(ChatColor.YELLOW + "Tip: " + ChatColor.GOLD + "shift-left-click" + ChatColor.YELLOW + " the shop to buy or sell a custom amount at once.");
+            player.sendMessage(Utils.colour("&b&lTIP: &fShift-click the shop to buy or sell a custom amount"));
         }
     }
 
