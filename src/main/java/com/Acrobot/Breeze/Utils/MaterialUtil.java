@@ -102,12 +102,10 @@ public class MaterialUtil {
         ItemMeta meta = item.getItemMeta();
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
 
-        Plugin ae = Bukkit.getPluginManager().getPlugin("AdvancedEnchantments");
-        if (ae != null) {
-            pdc.remove(new NamespacedKey(ae, "ae_gkit_id"));
-            pdc.remove(new NamespacedKey(ae, "ae_gkit_spawn_time"));
-        }
-        
+        pdc.remove(new NamespacedKey("advancedenchantments", "ae_gkit_id"));
+        pdc.remove(new NamespacedKey("advancedenchantments", "ae_gkit_spawn_time"));
+        pdc.remove(new NamespacedKey("advancedenchantments", "ae_rune_id"));
+
         item.setItemMeta(meta);
     }
 
