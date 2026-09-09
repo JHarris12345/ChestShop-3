@@ -19,7 +19,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.plugin.Plugin;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.nodes.Tag;
@@ -91,8 +90,31 @@ public class MaterialUtil {
     }
 
     /**
+     * The namespace the gkit entries are stored under.
+     * <p>
+     * A NamespacedKey built from a plugin uses that plugin's name lowercased as its namespace, so
+     * this is what AdvancedEnchantments stamped its gkits with, and what InsanityEnchantments still
+     * writes them under so items from either read the same. It is spelled out rather than looked up
+     * from the plugin because AdvancedEnchantments isn't installed any more, so asking the plugin
+     * manager for it gives back null and nothing gets stripped.
+     */
+    private static final String ENCHANTS_NAMESPACE = "advancedenchantments";
+
+    /**
+     * The gkit entries that are unique to one item.
+     * <p>
+     * Every gkit item is stamped with its own id and the time it was spawned, so two of the same
+     * gkit never match each other until these come off. What gkit an item is (ae_gkit) and what
+     * enchants it has are left alone - those are real differences between items.
+     */
+    private static final List<NamespacedKey> CLEARED_KEYS = List.of(
+            new NamespacedKey(ENCHANTS_NAMESPACE, "ae_gkit_id"),
+            new NamespacedKey(ENCHANTS_NAMESPACE, "ae_gkit_spawn_time")
+    );
+
+    /**
      * Clears specific PDC entries from an item's meta before comparison.
-     * Fill in this method with the NamespacedKeys you want to strip before comparing items.
+     * Add to {@link MaterialUtil#CLEARED_KEYS} to strip more entries before comparing items.
      *
      * @param item The cloned ItemStack to clear PDC entries from
      */
@@ -102,12 +124,10 @@ public class MaterialUtil {
         ItemMeta meta = item.getItemMeta();
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
 
-        Plugin ae = Bukkit.getPluginManager().getPlugin("AdvancedEnchantments");
-        if (ae != null) {
-            pdc.remove(new NamespacedKey(ae, "ae_gkit_id"));
-            pdc.remove(new NamespacedKey(ae, "ae_gkit_spawn_time"));
+        for (NamespacedKey key : CLEARED_KEYS) {
+            pdc.remove(key);
         }
-        
+
         item.setItemMeta(meta);
     }
 
