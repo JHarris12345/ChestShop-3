@@ -1,6 +1,7 @@
 package com.Acrobot.ChestShop.Commands;
 
 import com.Acrobot.ChestShop.ChestShop;
+import com.Acrobot.ChestShop.Logging.TransactionLogEntry;
 import com.Acrobot.ChestShop.Utils.ChestShopStats;
 import com.Acrobot.ChestShop.Utils.Utils;
 import org.bukkit.command.Command;
@@ -98,31 +99,25 @@ public class GlobalStats implements TabExecutor {
 
                 for (String line : lines) {
                     try {
+                        // Handles both the current log format (which includes each player's UUID) and older ones
+                        TransactionLogEntry entry = TransactionLogEntry.parse(line);
+                        if (entry == null) continue;
+
+                        // Only the time frame stated
+                        if (System.currentTimeMillis() - entry.getTime() > (hours * 60 * 60000)) continue;
+
                         // GC trades are never taxed (so they have no "after tax)" suffix) - count them separately
-                        if ((line.contains(" bought ") || line.contains(" sold ")) && line.contains(" for ")) {
-                            String[] forTokens = line.split(" for ")[1].split(" ");
-                            if (forTokens.length > 1 && forTokens[1].equalsIgnoreCase("GC")) {
-                                String gcTimeString = line.substring(0, 22);
-                                long gcTime = Utils.getLongTimeFromLogTime(gcTimeString);
-                                if (System.currentTimeMillis() - gcTime <= (hours * 60 * 60000)) {
-                                    gcVolume += Double.parseDouble(forTokens[0].replace(",", ""));
-                                }
-                                continue;
-                            }
+                        if (entry.isGc()) {
+                            gcVolume += entry.getPrice();
+                            continue;
                         }
 
                         // TODO: If we ever remove this check and include lines that DON'T have tax, then we need to re-do the system so that the totalAfterTax
                         // becomes totalTax and the tax is calculated for each individual line, else it will be off (see how auction house stats command does it)
-                        if (!line.contains("after tax)")) continue;
+                        if (entry.getAfterTax() == null) continue;
 
-                        String timeString = line.substring(0, 22);
-                        long time = Utils.getLongTimeFromLogTime(timeString);
-
-                        // Only the time frame stated
-                        if (System.currentTimeMillis() - time > (hours * 60 * 60000)) continue;
-
-                        total += Double.parseDouble(line.split(" for ")[1].split(" ")[0].replace(",", ""));
-                        tax += Double.parseDouble(line.split("\\[world] ")[1].split(" ")[3].replace("(", "").replace(",", ""));
+                        total += entry.getPrice();
+                        tax += entry.getAfterTax();
 
                     } catch (Exception ex) {
                         plugin.getLogger().info("Error whilst calculating line");
