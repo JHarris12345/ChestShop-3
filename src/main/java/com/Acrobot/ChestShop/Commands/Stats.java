@@ -1,6 +1,7 @@
 package com.Acrobot.ChestShop.Commands;
 
 import com.Acrobot.ChestShop.ChestShop;
+import com.Acrobot.ChestShop.Logging.TransactionLogEntry;
 import com.Acrobot.ChestShop.Utils.ChestShopStats;
 import com.Acrobot.ChestShop.Utils.Utils;
 import com.j256.ormlite.stmt.query.In;
@@ -184,42 +185,25 @@ public class Stats implements TabExecutor {
 
                 for (String line : lines) {
                     try {
-                        String lowercaseLine = line.toLowerCase();
-                        if (!lowercaseLine.contains(" " + lowercaseName + " ")) continue;
+                        // Cheap pre-filter so we don't run the (comparatively slow) parser over every single line
+                        if (!line.toLowerCase().contains(lowercaseName)) continue;
 
-                        String[] split = line.split(" ");
-                        String action = split[3];
-
-                        if (!action.equals("bought") && !action.equals("sold")) continue;
-                        boolean earnedMoney = (action.equals("bought"));
-
-                        String timeString = line.substring(0, 22);
-                        long time = Utils.getLongTimeFromLogTime(timeString);
+                        // Handles both the current log format (which includes each player's UUID) and older ones
+                        TransactionLogEntry entry = TransactionLogEntry.parse(line);
+                        if (entry == null) continue;
 
                         // Only the time frame stated
-                        if (System.currentTimeMillis() - time > (hours * 60 * 60000)) continue;
+                        if (System.currentTimeMillis() - entry.getTime() > (hours * 60 * 60000)) continue;
 
                         // Make sure the username is the one who owns the chest shop
-                        String receiver;
-                        if (earnedMoney) {
-                            receiver = line.split(" from ")[1].split(" ")[0];
-                        } else {
-                            receiver = line.split(" to ")[1].split(" ")[0];
-                        }
+                        if (!lowercaseName.equals(entry.getOwnerName().toLowerCase())) continue;
 
-                        if (!lowercaseName.equals(receiver.toLowerCase())) continue;
+                        // The owner earns money when someone buys from them and pays out when someone sells to them
+                        boolean earnedMoney = entry.hasBought();
 
-                        String location = line.split(" at \\[")[1];
-                        location = "[" + location; // Add back the leading [ we removed for the split above (we included it in the split to make it a more accurate split)
-                        if (location.contains(" (")) location = location.split(" \\(")[0]; // Remove the tax section if it is there
-
-                        String[] forTokens = line.split(" for ")[1].split(" ");
-                        double price = Double.parseDouble(forTokens[0].replace(",", ""));
-                        boolean isGc = forTokens.length > 1 && forTokens[1].equalsIgnoreCase("GC");
-
-                        double signed = earnedMoney ? price : (0 - price);
-                        double[] totals = chestshops.computeIfAbsent(location, k -> new double[2]);
-                        if (isGc) {
+                        double signed = earnedMoney ? entry.getPrice() : (0 - entry.getPrice());
+                        double[] totals = chestshops.computeIfAbsent(entry.getLocation(), k -> new double[2]);
+                        if (entry.isGc()) {
                             totals[1] += signed;
                         } else {
                             totals[0] += signed;
