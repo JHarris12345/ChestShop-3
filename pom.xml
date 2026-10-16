@@ -59,10 +59,19 @@
             <scope>provided</scope>
         </dependency>
 
+        <!--
+            The org.spigotmc:spigot (server internals) dependency was removed: it is only
+            ever published to a local repository by BuildTools, so the build could not be
+            resolved on any machine that had not run BuildTools for that exact version.
+            Nothing in src/ imports net.minecraft or org.bukkit.craftbukkit, so paper-api
+            plus an explicit log4j-core (the only server-internal API the plugin actually
+            compiles against, in ChestShop#turnOffDatabaseLogging) is enough.
+        -->
+
         <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot</artifactId>
-            <version>1.20.4-R0.1-SNAPSHOT</version>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.22.1</version>
             <scope>provided</scope>
         </dependency>
 
