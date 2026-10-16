@@ -36,7 +36,7 @@ import static com.Acrobot.ChestShop.Events.PreShopCreationEvent.CreationOutcome.
 public class ShulkerShopChecker implements Listener {
 
     public static final String DENIAL_MESSAGE = "&c[Shop] &fYou can't make a shulker box shop that takes shulker boxes in,"
-            + " because that would put a shulker box inside a shulker box. Use a chest or barrel for the shop container,"
+            + " because that would put a shulker box inside a shulker box. Use another container for the shop,"
             + " or make it a &abuy &fshop so the shulker boxes leave the container instead";
 
     /**
