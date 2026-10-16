@@ -301,6 +301,46 @@ public class ChestShopSign {
         return null;
     }
 
+    /**
+     * Works out whether a shop takes items <i>in</i>, meaning the client hands
+     * items over and they end up inside the shop container.
+     *
+     * <p>Prices on a sign are written from the client's point of view, so the
+     * direction that fills the container is the <b>sell</b> one: a
+     * "[Click to sell]" sign (or a legacy {@code S} price) is the client
+     * selling to the shop. That is also the direction
+     * {@link com.Acrobot.ChestShop.Listeners.PostTransaction.ItemManager#inventoryItemRemover}
+     * handles, transferring from the client inventory into the owner
+     * inventory.</p>
+     *
+     * <p>New-format signs only ever carry a single direction. Legacy signs can
+     * carry both on one price line ({@code "B 10:S 5"}), and such a sign can
+     * be sold to, so the presence of a sell price is what counts there rather
+     * than which direction {@link #getShopType(String[])} happens to pick.</p>
+     *
+     * @param lines The sign lines
+     * @return Whether a client can put items into this shop's container
+     */
+    public static boolean takesItemsIn(String[] lines) {
+        String[] stripped = StringUtil.stripColourCodes(lines);
+
+        if (isNewFormat(stripped)) {
+            return getShopType(stripped) == ShopType.SELL;
+        }
+
+        return PriceUtil.hasSellPrice(LegacyChestShopSign.getPrice(stripped));
+    }
+
+    /**
+     * Works out whether a shop takes items in. See {@link #takesItemsIn(String[])}.
+     *
+     * @param sign The sign
+     * @return Whether a client can put items into this shop's container
+     */
+    public static boolean takesItemsIn(Sign sign) {
+        return sign != null && takesItemsIn(sign.getLines());
+    }
+
     public static String getQuantityLine(Sign sign) throws IllegalArgumentException {
         return getQuantityLine(sign.getLines());
     }

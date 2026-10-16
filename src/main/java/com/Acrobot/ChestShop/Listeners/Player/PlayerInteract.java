@@ -15,9 +15,11 @@ import com.Acrobot.ChestShop.Events.PreTransactionEvent;
 import com.Acrobot.ChestShop.Events.ShopInfoEvent;
 import com.Acrobot.ChestShop.Events.TransactionEvent;
 import com.Acrobot.ChestShop.Inventories.AmountAnvilGUI;
+import com.Acrobot.ChestShop.Listeners.PreShopCreation.ShulkerShopChecker;
 import com.Acrobot.ChestShop.Permission;
 import com.Acrobot.ChestShop.Security;
 import com.Acrobot.ChestShop.Signs.ChestShopSign;
+import com.Acrobot.ChestShop.Utils.ContainerItemUtil;
 import com.Acrobot.ChestShop.Utils.ItemUtil;
 import com.Acrobot.ChestShop.Utils.Utils;
 import com.Acrobot.ChestShop.Utils.uBlock;
@@ -155,6 +157,17 @@ public class PlayerInteract implements Listener {
                     if (StringUtil.getMinecraftStringWidth(itemCode) > MaterialUtil.MAXIMUM_SIGN_WIDTH) {
                         Messages.INVALID_SHOP_DETECTED.sendWithPrefix(player);
                         return;
+                    }
+
+                    // Autofill writes the item line straight onto an existing shop
+                    // sign, so it never passes through the shop creation checks.
+                    // Apply the same nested shulker box refusal here.
+                    if (ChestShopSign.takesItemsIn(sign) && ContainerItemUtil.isShulkerBox(item)) {
+                        Container autofillContainer = uBlock.findConnectedContainer(sign);
+                        if (autofillContainer != null && ContainerItemUtil.isShulkerBox(autofillContainer.getBlock().getType())) {
+                            ShulkerShopChecker.denied(player);
+                            return;
+                        }
                     }
 
                     sign.setLine(ITEM_LINE, ChestShopSign.LINE_COLOR + itemCode);

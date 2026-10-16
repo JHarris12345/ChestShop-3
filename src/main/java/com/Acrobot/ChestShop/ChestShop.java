@@ -324,6 +324,7 @@ public class ChestShop extends JavaPlugin {
         registerEvent(new com.Acrobot.ChestShop.Listeners.PreShopCreation.ErrorMessageSender());
         registerEvent(new PriceChecker());
         registerEvent(new QuantityChecker());
+        registerEvent(new ShulkerShopChecker());
         registerEvent(new TerrainChecker());
     }
 
