@@ -13,6 +13,7 @@ import com.Acrobot.ChestShop.Listeners.Economy.GiftcardsListener;
 import com.Acrobot.ChestShop.Listeners.Economy.ServerAccountCorrector;
 import com.Acrobot.ChestShop.Listeners.Economy.TaxModule;
 import com.Acrobot.ChestShop.Listeners.GarbageTextListener;
+import com.Acrobot.ChestShop.Listeners.Item.CopperGolemProtector;
 import com.Acrobot.ChestShop.Listeners.Item.ItemMoveListener;
 import com.Acrobot.ChestShop.Listeners.Item.ItemStringListener;
 import com.Acrobot.ChestShop.Listeners.ItemInfoListener;
@@ -304,6 +305,9 @@ public class ChestShop extends JavaPlugin {
         if (!Properties.TURN_OFF_HOPPER_PROTECTION) {
             registerEvent(new ItemMoveListener());
         }
+
+        // Registers itself, and only on a server new enough to have copper golems
+        CopperGolemProtector.register(this);
     }
 
     private void registerShopRemovalEvents() {
