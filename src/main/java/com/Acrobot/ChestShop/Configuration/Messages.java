@@ -5,6 +5,7 @@ import com.Acrobot.ChestShop.ChestShop;
 import de.themoep.minedown.adventure.MineDown;
 import de.themoep.utils.lang.bukkit.BukkitLanguageConfig;
 import de.themoep.utils.lang.bukkit.LanguageManager;
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -177,23 +178,33 @@ public class Messages {
         }
 
         public void sendWithPrefix(CommandSender sender, Map<String, String> replacementMap, String... replacements) {
-            ChestShop.getAudiences().sender(sender).sendMessage(getComponent(sender, true, replacementMap, replacements));
+            sendComponent(sender, getComponent(sender, true, replacementMap, replacements));
         }
 
         public void sendWithPrefix(CommandSender sender, Map<String, String> replacements) {
-            ChestShop.getAudiences().sender(sender).sendMessage(getComponent(sender, true, replacements));
+            sendComponent(sender, getComponent(sender, true, replacements));
         }
 
         public void sendWithPrefix(CommandSender sender, String... replacements) {
-            ChestShop.getAudiences().sender(sender).sendMessage(getComponent(sender, true, Collections.emptyMap(), replacements));
+            sendComponent(sender, getComponent(sender, true, Collections.emptyMap(), replacements));
         }
 
         public void send(CommandSender sender, String... replacements) {
-            ChestShop.getAudiences().sender(sender).sendMessage(getComponent(sender, false, Collections.emptyMap(), replacements));
+            sendComponent(sender, getComponent(sender, false, Collections.emptyMap(), replacements));
         }
 
         public void send(CommandSender sender, Map<String, String> replacements) {
-            ChestShop.getAudiences().sender(sender).sendMessage(getComponent(sender, false, replacements));
+            sendComponent(sender, getComponent(sender, false, replacements));
+        }
+
+        // Paper senders are native audiences. adventure-platform's BukkitAudiences silently drops
+        // messages on 26.3, so only fall back to it for a sender that is not one
+        private static void sendComponent(CommandSender sender, Component component) {
+            if (sender instanceof Audience) {
+                ((Audience) sender).sendMessage(component);
+            } else {
+                ChestShop.getAudiences().sender(sender).sendMessage(component);
+            }
         }
 
         @Deprecated
